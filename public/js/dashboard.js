@@ -10,7 +10,13 @@ const STATUS_LABEL = {
   cancelled: 'Cancelled',
 };
 
-const state = { status: '', q: '', bookings: [], stats: { total: 0, byStatus: {} }, openId: null };
+const PAGE_SIZE = 50;
+const state = {
+  status: '', q: '', bookings: [],
+  stats: { total: 0, byStatus: {} },
+  openId: null,
+  page: 1, pages: 1, total: 0,
+};
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 function esc(s) {
@@ -54,10 +60,16 @@ async function loadBookings() {
   const params = new URLSearchParams();
   if (state.status) params.set('status', state.status);
   if (state.q) params.set('q', state.q);
+  params.set('page', state.page);
+  params.set('limit', PAGE_SIZE);
   const res = await api('/api/admin/bookings?' + params.toString());
   const data = await res.json();
   state.bookings = data.bookings || [];
+  state.total = data.total || 0;
+  state.pages = data.pages || 1;
+  state.page = data.page || 1; // server clamps the page; mirror it back
   renderTable();
+  renderPager();
 }
 
 /* ── Rendering ──────────────────────────────────────────────────────────── */
@@ -81,7 +93,7 @@ function renderTable() {
   const stateEl = document.getElementById('state');
   const count = document.getElementById('result-count');
 
-  count.textContent = `[ ${state.bookings.length} SHOWN ]`;
+  count.textContent = `[ ${state.total.toLocaleString()} ${state.status || state.q ? 'MATCHED' : 'TOTAL'} ]`;
 
   if (!state.bookings.length) {
     tbody.innerHTML = '';
@@ -106,6 +118,23 @@ function renderTable() {
       </tr>`
     )
     .join('');
+}
+
+function renderPager() {
+  const pager = document.getElementById('pager');
+  if (!state.total) { pager.innerHTML = ''; return; }
+  const from = (state.page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(state.page * PAGE_SIZE, state.total);
+  pager.innerHTML = `
+    <button class="btn pg-btn" data-pg="prev" ${state.page <= 1 ? 'disabled' : ''}>← Prev</button>
+    <span class="pager-info">${from.toLocaleString()}–${to.toLocaleString()} of ${state.total.toLocaleString()} · page ${state.page} / ${state.pages}</span>
+    <button class="btn pg-btn" data-pg="next" ${state.page >= state.pages ? 'disabled' : ''}>Next →</button>`;
+}
+
+/** Reset to the first page and reload (used whenever a filter/search changes). */
+function applyFilter() {
+  state.page = 1;
+  loadBookings();
 }
 
 /* ── Detail drawer ──────────────────────────────────────────────────────── */
@@ -217,7 +246,15 @@ document.getElementById('stats').addEventListener('click', (e) => {
   if (!card) return;
   state.status = card.dataset.status;
   renderStats();
+  applyFilter();
+});
+
+document.getElementById('pager').addEventListener('click', (e) => {
+  const btn = e.target.closest('.pg-btn');
+  if (!btn || btn.disabled) return;
+  state.page += btn.dataset.pg === 'next' ? 1 : -1;
   loadBookings();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 document.getElementById('rows').addEventListener('click', (e) => {
@@ -231,7 +268,7 @@ document.getElementById('search').addEventListener('input', (e) => {
   const q = e.target.value;
   searchTimer = setTimeout(() => {
     state.q = q;
-    loadBookings();
+    applyFilter();
   }, 250);
 });
 

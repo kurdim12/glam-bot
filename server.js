@@ -83,7 +83,12 @@ app.get('/api/admin/stats', auth.requireAuth, (req, res) => {
 
 app.get('/api/admin/bookings', auth.requireAuth, (req, res) => {
   const { status, q } = req.query;
-  res.json({ ok: true, bookings: db.listBookings({ status, q }) });
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
+  const total = db.countBookings({ status, q });
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), pages);
+  const bookings = db.listBookings({ status, q, limit, offset: (page - 1) * limit });
+  res.json({ ok: true, bookings, total, page, pages, limit });
 });
 
 app.get('/api/admin/bookings/:id', auth.requireAuth, (req, res) => {

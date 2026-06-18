@@ -35,8 +35,10 @@ db.exec(`
     updated_at  TEXT    NOT NULL
   );
 `);
-db.exec('CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);');
 db.exec('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at);');
+// Composite index serves "filter by status, newest first" (and status-only
+// counts via its prefix) without a sort — keeps the dashboard fast at 50k+.
+db.exec('CREATE INDEX IF NOT EXISTS idx_bookings_status_created ON bookings(status, created_at);');
 
 /** The status pipeline a booking moves through. */
 const STATUSES = ['new', 'contacted', 'booked', 'completed', 'cancelled'];
@@ -66,11 +68,8 @@ function getBooking(id) {
   return db.prepare('SELECT * FROM bookings WHERE id = ?').get(id) || null;
 }
 
-/**
- * List bookings with optional status filter and free-text search.
- * Sorted newest first.
- */
-function listBookings({ status, q } = {}) {
+/** Build the shared WHERE clause + bound params for a status/search filter. */
+function buildWhere({ status, q } = {}) {
   const where = [];
   const params = [];
 
@@ -84,12 +83,34 @@ function listBookings({ status, q } = {}) {
     params.push(like, like, like, like, like);
   }
 
-  const sql =
-    'SELECT * FROM bookings' +
-    (where.length ? ` WHERE ${where.join(' AND ')}` : '') +
-    ' ORDER BY datetime(created_at) DESC, id DESC';
+  return { clause: where.length ? ` WHERE ${where.join(' AND ')}` : '', params };
+}
 
-  return db.prepare(sql).all(...params);
+/**
+ * List bookings with optional status filter and free-text search, newest
+ * first. Pass `limit`/`offset` to fetch a single page; omit `limit` to get
+ * every matching row (used by the CSV export).
+ *
+ * created_at is stored as an ISO-8601 string, so a plain DESC sort is both
+ * chronological and index-friendly (idx_bookings_created) — no per-row
+ * datetime() call, which keeps this fast at tens of thousands of rows.
+ */
+function listBookings({ status, q, limit, offset } = {}) {
+  const { clause, params } = buildWhere({ status, q });
+  const args = [...params];
+
+  let sql = 'SELECT * FROM bookings' + clause + ' ORDER BY created_at DESC, id DESC';
+  if (limit != null) {
+    sql += ' LIMIT ? OFFSET ?';
+    args.push(limit, offset || 0);
+  }
+  return db.prepare(sql).all(...args);
+}
+
+/** Count bookings matching the same filters (drives pagination totals). */
+function countBookings({ status, q } = {}) {
+  const { clause, params } = buildWhere({ status, q });
+  return db.prepare('SELECT COUNT(*) AS n FROM bookings' + clause).get(...params).n;
 }
 
 function updateBooking(id, { status, admin_notes }) {
@@ -131,6 +152,7 @@ module.exports = {
   createBooking,
   getBooking,
   listBookings,
+  countBookings,
   updateBooking,
   deleteBooking,
   stats,

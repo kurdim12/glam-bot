@@ -204,6 +204,25 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
   font-size: 18px;
 }
 
+/* ─── Pager ───────────────────────────────────────────────────────────────── */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 28px;
+}
+.pager:empty { display: none; }
+.pager .btn { padding: 9px 18px; }
+.pager-info {
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--warm-grey);
+  min-width: 220px;
+  text-align: center;
+}
+
 /* ─── Detail drawer ───────────────────────────────────────────────────────── */
 .drawer-overlay {
   position: fixed;
