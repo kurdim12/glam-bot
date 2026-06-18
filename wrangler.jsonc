@@ -1,0 +1,40 @@
+{
+  // GLAMBOT booking — Cloudflare Workers deployment.
+  // Static assets (the form, admin UI, CSS/JS, logo) are served from ./public;
+  // worker/index.js handles the API + gated admin pages; data lives in D1.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "glambot-booking",
+  "main": "worker/index.js",
+  "compatibility_date": "2025-11-01",
+
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Serve *.html at clean URLs (e.g. /admin/login -> /admin/login.html).
+    "html_handling": "auto-trailing-slash",
+    // Unknown paths fall back to the booking form.
+    "not_found_handling": "single-page-application",
+    // Only run the Worker for these routes; everything else is a direct asset.
+    "run_worker_first": ["/api/*", "/admin", "/admin/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "glambot",
+      // Replace after `wrangler d1 create glambot` (or `npm run cf:db:create`).
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Non-secret config. ADMIN_PASSWORD and SESSION_SECRET are secrets — set them
+  // with `wrangler secret put ...` (production) or in .dev.vars (local dev).
+  "vars": {
+    "SESSION_TTL_HOURS": "12"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

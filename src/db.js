@@ -19,26 +19,13 @@ const db = new DatabaseSync(path.join(DATA_DIR, 'glambot.db'));
 db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA foreign_keys = ON;');
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS bookings (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT    NOT NULL,
-    email       TEXT    NOT NULL,
-    phone       TEXT    NOT NULL,
-    shoot_date  TEXT,
-    occasion    TEXT,
-    location    TEXT,
-    notes       TEXT,
-    status      TEXT    NOT NULL DEFAULT 'new',
-    admin_notes TEXT    NOT NULL DEFAULT '',
-    created_at  TEXT    NOT NULL,
-    updated_at  TEXT    NOT NULL
-  );
-`);
-db.exec('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at);');
-// Composite index serves "filter by status, newest first" (and status-only
-// counts via its prefix) without a sort — keeps the dashboard fast at 50k+.
-db.exec('CREATE INDEX IF NOT EXISTS idx_bookings_status_created ON bookings(status, created_at);');
+// Schema is the same SQL file Cloudflare D1 uses (migrations/0001_init.sql),
+// so both backends stay in lockstep. D1 is SQLite too, hence the shared DDL.
+const schema = fs.readFileSync(
+  path.join(__dirname, '..', 'migrations', '0001_init.sql'),
+  'utf8'
+);
+db.exec(schema);
 
 /** The status pipeline a booking moves through. */
 const STATUSES = ['new', 'contacted', 'booked', 'completed', 'cancelled'];

@@ -31,12 +31,12 @@ app.use(express.json({ limit: '64kb' }));
 app.use(express.urlencoded({ extended: false, limit: '64kb' }));
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const VIEWS_DIR = path.join(__dirname, 'views');
 
-// ─── Public site ────────────────────────────────────────────────────────────
-app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
+// NOTE: static asset serving is mounted lower down, *after* the /admin routes,
+// so the gated admin pages win over serve-static's directory handling for the
+// public/admin/ folder. See "Static site" below.
 
-// Create a booking inquiry.
+// ─── API: create a booking inquiry ───────────────────────────────────────────
 app.post('/api/bookings', (req, res) => {
   // Honeypot: real users never fill the hidden "website" field. Bots do.
   if (req.body && String(req.body.website || '').trim() !== '') {
@@ -140,13 +140,18 @@ app.get('/admin', (req, res) => {
 
 app.get('/admin/login', (req, res) => {
   if (auth.isAuthed(req)) return res.redirect('/admin/dashboard');
-  res.sendFile(path.join(VIEWS_DIR, 'login.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'admin', 'login.html'));
 });
 
 app.get('/admin/dashboard', (req, res) => {
   if (!auth.isAuthed(req)) return res.redirect('/admin/login');
-  res.sendFile(path.join(VIEWS_DIR, 'dashboard.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'admin', 'dashboard.html'));
 });
+
+// ─── Static site ──────────────────────────────────────────────────────────────
+// Mounted after the routes above (no `extensions: ['html']`) so the form, CSS,
+// JS, and images are served directly while the gated /admin URLs keep priority.
+app.use(express.static(PUBLIC_DIR));
 
 // ─── Fallbacks ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

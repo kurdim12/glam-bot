@@ -5,8 +5,9 @@ Jordan / MENA). A public inquiry form on the brand's signature dark, cinematic
 look, backed by a simple password-protected admin dashboard to manage every
 inquiry that comes in.
 
-No external services, no API keys, no database server — just Node and a single
-SQLite file.
+Deploys two ways from one codebase: as a **Node + SQLite** app on any Node host,
+or fully serverless on **Cloudflare** (Workers + D1). No third-party services or
+API keys either way.
 
 ---
 
@@ -24,11 +25,19 @@ SQLite file.
     client, move a booking through its status pipeline, and jot internal notes,
   - delete, and a one-click **CSV export** of all bookings.
 
-## Tech
+## Tech — runs two ways
 
-- **Node.js ≥ 22.5** with the built-in `node:sqlite` module (no native build step).
-- **Express** is the only runtime dependency.
-- Storage is one file: `data/glambot.db` (created automatically, git-ignored).
+The same frontend (`public/`) and database schema (`migrations/0001_init.sql`)
+power two interchangeable backends. Pick whichever host you're deploying to:
+
+| Target | Runtime | Storage | Entry point |
+| --- | --- | --- | --- |
+| **Node host** (Render, Railway, VPS) | Node ≥ 22.5 + Express | `node:sqlite` file (`data/glambot.db`) | `server.js` |
+| **Cloudflare** (edge) | Workers + Static Assets | **D1** (serverless SQLite) | `worker/index.js` |
+
+D1 *is* SQLite, so the schema and every SQL query are identical across both —
+only the runtime glue (auth via Web Crypto vs `node:crypto`, D1 vs `node:sqlite`)
+differs. See [**Deploy to Cloudflare**](#deploy-to-cloudflare) below.
 
 ## Brand
 
@@ -116,7 +125,7 @@ SQLite's own ceiling is ~281 TB, so storage is never the limit. The signal to
 move to a hosted Postgres/Supabase is needing *multiple* app servers or
 sustained heavy write concurrency — not row count.
 
-## Deploying
+## Deploy to a Node host
 
 Any host that runs Node 22.5+ works (Render, Railway, Fly, a VPS, etc.):
 
@@ -127,7 +136,76 @@ Any host that runs Node 22.5+ works (Render, Railway, Fly, a VPS, etc.):
 4. Serve over HTTPS in production — the session cookie is marked `secure` when
    `NODE_ENV=production`.
 
+## Deploy to Cloudflare
+
+Runs as a **Worker** (API + gated admin pages) with **Static Assets** (the form,
+CSS/JS, logo) and a **D1** database — fully serverless, no `data/` directory to
+persist. Prerequisite: a Cloudflare account and `npm install` (which pulls in
+`wrangler`).
+
+**1. Create the D1 database** and paste its id into `wrangler.jsonc`:
+
+```bash
+npm run cf:db:create          # wrangler d1 create glambot
+# copy the printed database_id → wrangler.jsonc → d1_databases[0].database_id
+```
+
+**2. Apply the schema:**
+
+```bash
+npm run cf:migrate            # applies migrations/0001_init.sql to remote D1
+```
+
+**3. Set the secrets** (do NOT commit these):
+
+```bash
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put SESSION_SECRET     # a long random string
+```
+
+**4. Deploy:**
+
+```bash
+npm run cf:deploy             # wrangler deploy
+```
+
+**Local Cloudflare-parity dev** (Workers runtime + local D1 via Miniflare):
+
+```bash
+cp .dev.vars.example .dev.vars        # local ADMIN_PASSWORD / SESSION_SECRET
+npm run cf:migrate:local              # seed the local D1
+npm run cf:dev                        # → http://localhost:8787
+```
+
+The session cookie is automatically marked `Secure` on HTTPS (production) and
+left off on local `http://localhost`, so login works in both.
+
 ## Project layout
+
+```
+glam-bot/
+├── server.js              # Node/Express entry point
+├── src/                   # Node backend
+│   ├── db.js              # node:sqlite (runs migrations/0001_init.sql)
+│   ├── auth.js            # signed-cookie sessions (node:crypto)
+│   ├── validate.js        # booking input validation
+│   └── env.js             # tiny .env loader
+├── worker/                # Cloudflare Worker backend (ESM)
+│   ├── index.js           # router: API + gated admin pages
+│   ├── db.js              # D1 queries (same SQL as src/db.js)
+│   ├── auth.js            # signed-cookie sessions (Web Crypto)
+│   └── validate.js        # booking input validation
+├── migrations/
+│   └── 0001_init.sql      # shared schema — D1 migrations AND node:sqlite
+├── wrangler.jsonc         # Cloudflare config (assets + D1 bindings)
+├── public/                # shared frontend (served by both backends)
+│   ├── index.html         # the booking form
+│   ├── admin/             # login.html, dashboard.html
+│   ├── css/               # brand.css, admin.css
+│   ├── js/                # form.js, login.js, dashboard.js
+│   └── assets/            # logo.png, favicon.svg
+└── data/                  # local SQLite DB (Node only; git-ignored)
+```
 
 ```
 glam-bot/

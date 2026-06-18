@@ -8,6 +8,10 @@ data/
 .env
 .env.local
 
+# Cloudflare Workers (local state + secrets)
+.wrangler/
+.dev.vars
+
 # Logs
 *.log
 npm-debug.log*

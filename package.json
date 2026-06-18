@@ -7,12 +7,20 @@
   "main": "server.js",
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.js",
-    "dev": "node --disable-warning=ExperimentalWarning --watch server.js"
+    "dev": "node --disable-warning=ExperimentalWarning --watch server.js",
+    "cf:dev": "wrangler dev",
+    "cf:deploy": "wrangler deploy",
+    "cf:db:create": "wrangler d1 create glambot",
+    "cf:migrate": "wrangler d1 migrations apply glambot --remote",
+    "cf:migrate:local": "wrangler d1 migrations apply glambot --local"
   },
   "engines": {
     "node": ">=22.5.0"
   },
   "dependencies": {
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "wrangler": "^4.42.0"
   }
 }
