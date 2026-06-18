@@ -3,6 +3,29 @@
 
 export const STATUSES = ['new', 'contacted', 'booked', 'completed', 'cancelled'];
 
+// Auto-create the schema on first DB use (once per isolate). This mirrors
+// migrations/0001_init.sql so a Git-push / CI deploy "just works" against a
+// brand-new D1 database without a separate `wrangler d1 migrations apply` step.
+// All statements are idempotent (IF NOT EXISTS), so it's safe to re-run.
+let schemaReady = false;
+export async function ensureSchema(env) {
+  if (schemaReady) return;
+  await env.DB.batch([
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL,
+        shoot_date TEXT, occasion TEXT, location TEXT, notes TEXT,
+        status TEXT NOT NULL DEFAULT 'new', admin_notes TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      )`
+    ),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_status_created ON bookings(status, created_at)'),
+  ]);
+  schemaReady = true;
+}
+
 export async function createBooking(env, b) {
   const now = new Date().toISOString();
   const res = await env.DB.prepare(

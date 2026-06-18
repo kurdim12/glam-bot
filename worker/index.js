@@ -71,6 +71,7 @@ export default {
       const result = validateBooking(body);
       if (!result.ok) return json({ ok: false, errors: result.errors }, 422);
       try {
+        await db.ensureSchema(env);
         const id = await db.createBooking(env, result.value);
         return json({ ok: true, id }, 201);
       } catch (err) {
@@ -99,6 +100,7 @@ export default {
       if (!(await auth.isAuthed(request, env))) {
         return json({ ok: false, error: 'Not authenticated' }, 401);
       }
+      await db.ensureSchema(env);
 
       if (pathname === '/api/admin/stats' && method === 'GET') {
         return json({ ok: true, ...(await db.stats(env)) });
