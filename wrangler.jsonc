@@ -22,8 +22,7 @@
     {
       "binding": "DB",
       "database_name": "glambot",
-      // Replace after `wrangler d1 create glambot` (or `npm run cf:db:create`).
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_id": "e77ac603-1e96-4767-90b6-95124974bfbb",
       "migrations_dir": "migrations"
     }
   ],
