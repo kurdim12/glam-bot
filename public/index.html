@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLAMBOT — Booking Inquiry</title>
+  <meta name="description" content="Reserve the Glambot. Cinematic robotic camera arm for weddings, galas, corporate events, and brand activations in Jordan and the MENA region." />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+
+  <!-- Futura/Proxima Nova stand-ins (Jost + Inter). See css/brand.css to swap in an Adobe Fonts kit. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/brand.css" />
+</head>
+<body>
+
+  <!-- TOP NAV -->
+  <header class="topbar">
+    <a href="/" class="topbar-link"><img class="topbar-logo" src="/assets/logo.png" alt="GLAMBOT" /></a>
+    <a href="#inquiry" class="meta meta-orange topbar-link">[ BOOK NOW ]</a>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-meta-row">
+        <span class="meta meta-orange">[ BOOKING INQUIRY / 2026 ]</span>
+        <span class="meta" id="timecode">[ 00:00:00 ]</span>
+      </div>
+
+      <h1 class="hero-title">
+        Reserve<br />
+        the <span class="accent">machine.</span>
+      </h1>
+
+      <p class="hero-subhead">
+        Tell us what you're shooting. We'll be in touch by phone to confirm the date, the
+        location, and the shot.
+      </p>
+    </div>
+
+    <div class="hero-footer">
+      <a href="#inquiry" class="scroll-cue">
+        <span class="scroll-cue-line"></span>
+        <span class="scroll-cue-label">Begin Inquiry</span>
+      </a>
+      <span class="meta">[ ARM: READY ]</span>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section class="form-section" id="inquiry">
+    <div class="form-wrap">
+      <div class="form-header">
+        <h2 class="form-title">The Brief.</h2>
+        <span class="meta">[ 01 / BOOKING DETAILS ]</span>
+      </div>
+
+      <form id="inquiry-form" novalidate>
+        <div class="form-grid">
+
+          <div class="field" data-field="name">
+            <label class="field-label" for="name">Full Name <span class="req">*</span></label>
+            <input class="field-input" type="text" id="name" name="name" required placeholder="Your name" autocomplete="name" />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="email">
+            <label class="field-label" for="email">Email <span class="req">*</span></label>
+            <input class="field-input" type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email" />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="phone">
+            <label class="field-label" for="phone">WhatsApp / Phone <span class="req">*</span></label>
+            <input class="field-input" type="tel" id="phone" name="phone" required placeholder="+962 ..." autocomplete="tel" />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="shoot_date">
+            <label class="field-label" for="date">Shoot Date <span class="req">*</span></label>
+            <input class="field-input" type="date" id="date" name="shoot_date" required />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="occasion">
+            <label class="field-label" for="type">Occasion <span class="req">*</span></label>
+            <select class="field-select" id="type" name="occasion" required>
+              <option value="" disabled selected>Select...</option>
+              <option value="Wedding">Wedding</option>
+              <option value="Gala">Gala</option>
+              <option value="Corporate Event">Corporate Event</option>
+              <option value="Red Carpet / Premiere">Red Carpet / Premiere</option>
+              <option value="Brand Activation">Brand Activation</option>
+              <option value="Product Shoot">Product Shoot</option>
+              <option value="Influencer Shoot">Influencer Shoot</option>
+              <option value="Other">Other</option>
+            </select>
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="location">
+            <label class="field-label" for="venue">Location <span class="req">*</span></label>
+            <input class="field-input" type="text" id="venue" name="location" required placeholder="Venue, studio, or city" />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field full" data-field="notes">
+            <label class="field-label" for="notes">Tell us your vision</label>
+            <textarea class="field-textarea" id="notes" name="notes" rows="3" placeholder="The look, the feel, the moment you're after..."></textarea>
+            <span class="field-error"></span>
+          </div>
+
+        </div>
+
+        <!-- Honeypot: hidden from humans -->
+        <div class="hp" aria-hidden="true">
+          <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="submit-btn" id="submit-btn">Send Inquiry</button>
+          <p class="submit-note">We'll review and call you back, usually within 24 hours.</p>
+        </div>
+
+        <div class="form-success">
+          <h3 class="form-success-title">Inquiry received.</h3>
+          <p class="form-success-body">
+            We've got it. Expect a call from us shortly to walk through the details.
+          </p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div>
+        <img class="footer-logo" src="/assets/logo.png" alt="GLAMBOT" />
+        <p class="footer-tag">
+          Cinematic robotic camera arm for weddings, galas, corporate events, and brand
+          activations across Jordan and the MENA region.
+        </p>
+      </div>
+      <div>
+        <p class="footer-heading">Contact</p>
+        <a class="footer-link" href="mailto:book@glambotjo.com">book@glambotjo.com</a>
+        <a class="footer-link" href="#inquiry">Booking inquiry</a>
+        <a class="footer-link" href="/admin">Admin</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="meta">© 2026 GLAMBOT JO. ALL RIGHTS RESERVED.</span>
+      <span class="meta meta-orange">[ END OF INQUIRY ]</span>
+    </div>
+  </footer>
+
+  <script src="/js/form.js"></script>
+</body>
+</html>

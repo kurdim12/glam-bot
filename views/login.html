@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLAMBOT — Admin Login</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/brand.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin">
+  <div class="login-wrap">
+    <div class="login-card">
+      <img class="login-logo" src="/assets/logo.png" alt="GLAMBOT" />
+      <h1>Control Room</h1>
+      <span class="meta meta-orange">[ ADMIN ACCESS ]</span>
+
+      <form id="login-form" novalidate>
+        <input
+          class="login-input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Admin password"
+          autocomplete="current-password"
+          autofocus
+        />
+        <button type="submit" class="btn btn-solid" id="login-btn">Enter</button>
+        <p class="login-error" id="login-error">Incorrect password.</p>
+      </form>
+    </div>
+    <a href="/" class="meta topbar-link">[ ← BACK TO SITE ]</a>
+  </div>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>

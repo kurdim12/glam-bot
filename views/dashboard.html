@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLAMBOT — Bookings</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/brand.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin">
+
+  <!-- TOP BAR -->
+  <header class="admin-bar">
+    <div class="admin-bar-left">
+      <img class="admin-bar-logo" src="/assets/logo.png" alt="GLAMBOT" />
+      <span class="rec"><span class="rec-dot"></span> Control Room</span>
+    </div>
+    <div class="admin-bar-right">
+      <a href="/" class="btn" target="_blank" rel="noopener">View Site</a>
+      <button class="btn btn-danger" id="logout-btn">Log Out</button>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <div class="admin-head">
+      <h1 class="admin-title">Bookings.</h1>
+      <a href="/api/admin/export.csv" class="btn">↓ Export CSV</a>
+    </div>
+
+    <!-- STAT CARDS (click to filter) -->
+    <section class="stats" id="stats"><!-- rendered by JS --></section>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <input
+        type="search"
+        class="search"
+        id="search"
+        placeholder="Search name, email, phone, location, occasion..."
+      />
+      <span class="meta" id="result-count"></span>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table class="bookings">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th class="hide-sm">Occasion</th>
+            <th class="hide-sm">Shoot Date</th>
+            <th class="hide-sm">Location</th>
+            <th>Status</th>
+            <th class="hide-sm">Received</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="state" id="state" style="display:none;"></div>
+    </div>
+  </main>
+
+  <!-- DETAIL DRAWER -->
+  <div class="drawer-overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3 id="d-name">—</h3>
+      <button class="drawer-close" id="drawer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"><!-- rendered by JS --></div>
+    <div class="drawer-foot">
+      <button class="btn btn-danger" id="delete-btn">Delete</button>
+      <span class="save-hint" id="save-hint"></span>
+    </div>
+  </aside>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

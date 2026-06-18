@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Runtime data (SQLite database + session secret) — never commit
+data/
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
