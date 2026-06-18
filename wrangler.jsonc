@@ -3,7 +3,7 @@
   // Static assets (the form, admin UI, CSS/JS, logo) are served from ./public;
   // worker/index.js handles the API + gated admin pages; data lives in D1.
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "glambot-booking",
+  "name": "glam-bot",
   "main": "worker/index.js",
   "compatibility_date": "2025-11-01",
 
