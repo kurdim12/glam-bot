@@ -379,7 +379,38 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
 @media (max-width: 900px) { .stats { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 720px) {
   .admin-bar { padding: 16px 20px; }
+  .admin-bar-right .btn { padding: 9px 14px; }
   .admin-main { padding: 28px 20px 60px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
-  .bookings td.hide-sm, .bookings th.hide-sm { display: none; }
+
+  /* Bookings table collapses to one card per row (labels from data-label). */
+  .table-wrap { border: none; overflow: visible; }
+  .bookings thead { display: none; }
+  .bookings,
+  .bookings tbody,
+  .bookings tr,
+  .bookings td { display: block; width: 100%; }
+  .bookings tr {
+    background: var(--charcoal);
+    border: 1px solid var(--slate);
+    margin-bottom: 12px;
+    padding: 16px 18px;
+  }
+  .bookings tr:last-child { border-bottom: 1px solid var(--slate); }
+  .bookings td {
+    padding: 5px 0;
+    border: none;
+  }
+  .bookings td::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--warm-grey);
+    margin-bottom: 3px;
+  }
+  .bookings td.name { font-size: 16px; }
 }

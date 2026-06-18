@@ -42,7 +42,8 @@ form.addEventListener('submit', async (e) => {
   clearErrors();
 
   btn.disabled = true;
-  btn.textContent = 'Sending...';
+  btn.classList.add('loading');
+  btn.textContent = 'Sending';
 
   const payload = Object.fromEntries(new FormData(form).entries());
 
@@ -71,9 +72,34 @@ form.addEventListener('submit', async (e) => {
     throw new Error('server');
   } catch (err) {
     btn.disabled = false;
+    btn.classList.remove('loading');
     btn.textContent = 'Send Inquiry';
-    if (err.message !== 'validation') {
-      alert('Something went wrong. Please email book@glambotjo.com directly.');
+    if (err.message === 'validation') {
+      toast('Please check the highlighted fields.', 'error');
+    } else {
+      toast('Something went wrong. Please email book@glambotjo.com directly.', 'error');
     }
   }
 });
+
+// Cinematic scroll-reveal — fade/slide sections in as they enter the viewport.
+(function reveal() {
+  const items = document.querySelectorAll('.reveal');
+  if (!items.length) return;
+  if (!('IntersectionObserver' in window)) {
+    items.forEach((el) => el.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+  );
+  items.forEach((el) => io.observe(el));
+})();

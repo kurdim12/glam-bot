@@ -57,6 +57,13 @@ async function loadStats() {
 }
 
 async function loadBookings() {
+  // Show a loading hint on the first paint (skip on pagination to avoid flicker).
+  if (!state.bookings.length) {
+    const stateEl = document.getElementById('state');
+    stateEl.style.display = 'block';
+    stateEl.textContent = 'Loading…';
+  }
+
   const params = new URLSearchParams();
   if (state.status) params.set('status', state.status);
   if (state.q) params.set('q', state.q);
@@ -109,12 +116,12 @@ function renderTable() {
     .map(
       (b) => `
       <tr data-id="${b.id}">
-        <td class="name">${esc(b.name)}<span class="sub">${esc(b.email)}</span></td>
-        <td class="hide-sm">${esc(b.occasion) || '<span class="muted">—</span>'}</td>
-        <td class="hide-sm">${fmtDate(b.shoot_date)}</td>
-        <td class="hide-sm">${esc(b.location) || '<span class="muted">—</span>'}</td>
-        <td><span class="pill ${b.status}">${STATUS_LABEL[b.status] || esc(b.status)}</span></td>
-        <td class="hide-sm muted">${fmtDateTime(b.created_at)}</td>
+        <td class="name" data-label="Client">${esc(b.name)}<span class="sub">${esc(b.email)}</span></td>
+        <td class="hide-sm" data-label="Occasion">${esc(b.occasion) || '<span class="muted">—</span>'}</td>
+        <td class="hide-sm" data-label="Shoot date">${fmtDate(b.shoot_date)}</td>
+        <td class="hide-sm" data-label="Location">${esc(b.location) || '<span class="muted">—</span>'}</td>
+        <td data-label="Status"><span class="pill ${b.status}">${STATUS_LABEL[b.status] || esc(b.status)}</span></td>
+        <td class="hide-sm muted" data-label="Received">${fmtDateTime(b.created_at)}</td>
       </tr>`
     )
     .join('');
@@ -222,6 +229,7 @@ async function saveOpen() {
     hint.classList.add('saved');
   } catch {
     hint.textContent = 'Save failed';
+    toast('Could not save changes. Try again.', 'error');
   }
 }
 
@@ -235,8 +243,9 @@ async function deleteOpen() {
     closeDrawer();
     await loadBookings();
     await loadStats();
+    toast(`Deleted ${b ? b.name : 'booking'}.`, 'success');
   } else {
-    alert('Could not delete this booking.');
+    toast('Could not delete this booking.', 'error');
   }
 }
 
