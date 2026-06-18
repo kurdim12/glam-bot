@@ -414,3 +414,79 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
   }
   .bookings td.name { font-size: 16px; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LUXURY ELEVATION (admin)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Top bar: glassy, elevated. */
+.admin-bar {
+  background: linear-gradient(180deg, var(--graphite), rgba(26, 26, 26, 0.9));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom-color: rgba(60, 60, 58, 0.8);
+}
+.admin-title { letter-spacing: -0.02em; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .admin-title {
+    background: linear-gradient(176deg, #ffffff, #cfcdc8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* Stat cards: subtle depth + a refined lift on hover. */
+.stats { border-color: rgba(60, 60, 58, 0.7); background: rgba(60, 60, 58, 0.7); }
+.stat {
+  background: linear-gradient(165deg, var(--charcoal), #1d1d1b);
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+.stat:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.38); }
+.stat.active { box-shadow: inset 3px 0 0 var(--signal-orange), 0 14px 32px rgba(0, 0, 0, 0.38); }
+.stat-num { font-weight: 200; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .stat.active .stat-num {
+    background: linear-gradient(135deg, var(--amber-glow), var(--deep-fire));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* Table rows: refined gradient hover with an orange edge. */
+.bookings tbody tr { transition: background 0.18s ease, box-shadow 0.18s ease; }
+.bookings tbody tr:hover {
+  background: linear-gradient(90deg, rgba(255, 92, 0, 0.05), transparent 60%);
+  box-shadow: inset 3px 0 0 var(--signal-orange);
+}
+
+/* Status pills: soft tinted fill instead of a plain outline. */
+.pill { border: none; padding: 6px 12px; }
+.pill.new       { color: var(--signal-orange); background: rgba(255, 92, 0, 0.12); }
+.pill.contacted { color: var(--amber-glow);    background: rgba(255, 131, 64, 0.12); }
+.pill.booked    { color: #6cb8ff;              background: rgba(62, 166, 255, 0.12); }
+.pill.completed { color: #58c896;              background: rgba(76, 175, 125, 0.14); }
+.pill.cancelled { color: var(--silver);        background: rgba(136, 136, 134, 0.12); }
+
+/* Detail drawer: glassy backdrop + elevated, gradient panel. */
+.drawer-overlay { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.drawer { background: linear-gradient(180deg, var(--graphite), #161616); box-shadow: -30px 0 60px rgba(0, 0, 0, 0.5); }
+
+/* Buttons: refined transitions; solid buttons get the molten gradient + glow. */
+.btn { transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease, box-shadow 0.3s ease, transform 0.15s ease; }
+.btn-solid {
+  background: linear-gradient(135deg, var(--signal-orange), var(--deep-fire));
+  box-shadow: 0 8px 24px rgba(255, 92, 0, 0.2);
+}
+.btn-solid:hover {
+  background: linear-gradient(135deg, var(--amber-glow), var(--signal-orange));
+  box-shadow: 0 10px 30px rgba(255, 92, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Search + login: elevated surfaces. */
+.search:focus { box-shadow: 0 0 0 1px var(--signal-orange); }
+.login-card { background: linear-gradient(180deg, var(--graphite), #161616); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }

@@ -442,9 +442,123 @@ form.submitted .form-success { display: block; }
   .toast-wrap { right: 16px; left: 16px; bottom: 16px; max-width: none; }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   LUXURY ELEVATION
+   A premium finish over the base brand — warm cinematic atmosphere, metallic
+   type, molten-gold accents, refined motion and gallery-like spacing.
+   Palette and typefaces unchanged; this layer only elevates the feel.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Warm, deep atmosphere behind everything (a faint amber wash from above). */
+body {
+  background-color: var(--void);
+  background-image:
+    radial-gradient(135% 90% at 50% -15%, rgba(255, 131, 64, 0.07), transparent 55%),
+    radial-gradient(90% 60% at 100% 0%, rgba(255, 92, 0, 0.05), transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Fine film grain — a tactile, premium texture over the dark surface. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Elegant dark scrollbar. */
+* { scrollbar-width: thin; scrollbar-color: var(--slate) transparent; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--slate); border: 3px solid var(--void); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--warm-grey); }
+::selection { background: var(--amber-glow); color: var(--void); }
+
+/* Top bar: a whisper of blur + more air. */
+.topbar { backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); padding-top: 28px; padding-bottom: 28px; }
+
+/* Gallery-like spacing. */
+.hero { padding: 168px 56px 96px; }
+.form-section { padding: 150px 56px; }
+.footer { padding: 80px 56px 48px; }
+.meta { letter-spacing: 0.24em; }
+
+/* Metallic platinum display type. */
+.hero-title { letter-spacing: -0.025em; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero-title {
+    background: linear-gradient(176deg, #ffffff 0%, #ece9e4 45%, #b9b7b1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .hero-title .accent {
+    background: linear-gradient(135deg, var(--amber-glow) 0%, var(--signal-orange) 55%, var(--deep-fire) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .form-title,
+  .form-success-title {
+    background: linear-gradient(176deg, #ffffff, #cfcdc8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+/* Soft molten glow around the accent word (works regardless of clip support). */
+.hero-title .accent { filter: drop-shadow(0 0 28px rgba(255, 92, 0, 0.28)); }
+.form-success-title { filter: drop-shadow(0 0 26px rgba(255, 92, 0, 0.25)); }
+
+/* Subhead: airier and more refined. */
+.hero-subhead { font-weight: 300; letter-spacing: 0.05em; line-height: 1.5; }
+
+/* Refined hairlines + a touch more room in the form. */
+.field { border-bottom-color: rgba(60, 60, 58, 0.7); padding: 32px 0; }
+.field:nth-child(odd):not(.full) { border-right-color: rgba(60, 60, 58, 0.7); }
+.form-header { border-bottom-color: rgba(60, 60, 58, 0.7); }
+
+/* Premium CTA: molten gradient, soft glow, a deliberate lift on hover. */
+.submit-btn {
+  background: linear-gradient(135deg, var(--signal-orange) 0%, var(--deep-fire) 100%);
+  letter-spacing: 0.3em;
+  box-shadow: 0 10px 34px rgba(255, 92, 0, 0.22);
+  transition: background 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
+}
+.submit-btn:hover {
+  background: linear-gradient(135deg, var(--amber-glow) 0%, var(--signal-orange) 100%);
+  box-shadow: 0 14px 46px rgba(255, 92, 0, 0.4);
+  transform: translateY(-2px);
+}
+.submit-btn:active { transform: translateY(0); }
+
+/* Slower, more deliberate scroll-reveal. */
+.reveal { transition-duration: 1s; transform: translateY(32px); }
+
+/* Hero settles in on load. */
+.hero-meta-row { animation: lux-fade 1.2s ease 0.05s both; }
+.hero-title { animation: lux-rise 1.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero-subhead { animation: lux-rise 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+@keyframes lux-rise { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes lux-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 720px) {
+  .hero { padding: 128px 24px 64px; }
+  .form-section { padding: 96px 24px; }
+  .footer { padding: 56px 24px 36px; }
+}
+
 /* Respect reduced-motion preferences. */
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
   .submit-btn.loading::after { animation: none; }
+  .hero-title, .hero-subhead, .hero-meta-row { animation: none; opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
 }
