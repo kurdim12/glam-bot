@@ -490,3 +490,45 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
 /* Search + login: elevated surfaces. */
 .search:focus { box-shadow: 0 0 0 1px var(--signal-orange); }
 .login-card { background: linear-gradient(180deg, var(--graphite), #161616); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATION (admin)
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  /* Inputs ≥16px so iOS doesn't zoom on focus. */
+  .search,
+  .login-input,
+  .notes-input,
+  .field-select-dark { font-size: 16px; }
+
+  /* Compact, safe-area-aware top bar; hide the "Control Room" label (keep dot). */
+  .admin-bar { padding: max(12px, env(safe-area-inset-top)) 16px 12px; gap: 10px; }
+  .admin-bar-left { gap: 10px; min-width: 0; }
+  .admin-bar-logo { height: 22px; }
+  .rec { font-size: 0; gap: 0; }
+  .admin-bar-right { gap: 8px; }
+  .admin-bar-right .btn { padding: 10px 12px; font-size: 11px; letter-spacing: 0.1em; }
+
+  .admin-main { padding: 24px 16px 56px; }
+
+  /* Toolbar stacks: full-width search, count on its own line. */
+  .toolbar { gap: 12px; }
+  .search { min-width: 0; width: 100%; }
+
+  /* Pager: page info on its own line, Prev/Next share the row as big targets. */
+  .pager { flex-wrap: wrap; gap: 12px; }
+  .pager-info { min-width: 0; flex-basis: 100%; order: -1; }
+  .pager .btn { flex: 1; justify-content: center; padding: 13px; }
+
+  /* Detail drawer spans the screen with comfortable padding. */
+  .drawer { width: 100%; }
+  .drawer-head { padding: 18px 20px; }
+  .drawer-body { padding: 22px 20px; }
+  .drawer-foot { padding: 16px 20px; }
+}
+
+@media (max-width: 400px) {
+  .stat { padding: 18px 15px; }
+  .stat-num { font-size: 34px; }
+  .stat-label { font-size: 9px; }
+}

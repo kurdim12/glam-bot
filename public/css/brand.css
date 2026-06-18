@@ -562,3 +562,48 @@ body::after {
   .hero-title, .hero-subhead, .hero-meta-row { animation: none; opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATION
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Global mobile niceties */
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: rgba(255, 92, 0, 0.18); }
+img, svg { max-width: 100%; }
+
+/* Small-viewport-height: the hero won't overflow behind the mobile browser bar. */
+.hero { min-height: 100svh; }
+
+/* Notch / home-indicator safe areas (paired with viewport-fit=cover). */
+.topbar { padding-top: max(28px, env(safe-area-inset-top)); }
+.toast-wrap { bottom: max(24px, env(safe-area-inset-bottom)); }
+
+@media (max-width: 720px) {
+  /* 'fixed' background attachment is janky/unsupported on mobile. */
+  body { background-attachment: scroll; }
+
+  .topbar { padding: max(16px, env(safe-area-inset-top)) 22px 16px; }
+  .topbar-logo { height: 24px; }
+  .topbar-link { padding: 6px 4px; }      /* larger tap target */
+
+  .hero-footer { gap: 20px; }
+  .field { padding: 22px 0; }
+  .field-input, .field-select, .field-textarea { font-size: 20px; }  /* ≥16px → no iOS zoom */
+
+  .toast-wrap {
+    right: 14px;
+    left: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    max-width: none;
+  }
+}
+
+/* Small phones */
+@media (max-width: 520px) {
+  .hero { padding: 112px 22px 56px; }
+  .hero-title { font-size: clamp(40px, 13.5vw, 92px); line-height: 0.96; }
+  .hero-meta-row { margin-bottom: 40px; flex-wrap: wrap; gap: 10px; }
+  .hero-footer { flex-direction: column; align-items: flex-start; }
+  .submit-btn { letter-spacing: 0.22em; padding: 20px 30px; }
+}
