@@ -115,48 +115,52 @@
             <span class="field-error"></span>
           </div>
 
-          <div class="field" data-field="email">
-            <label class="field-label" for="email">Email <span class="req">*</span></label>
-            <input class="field-input" type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email" />
+          <div class="field" data-field="phone">
+            <label class="field-label" for="phone">WhatsApp / Phone <span class="req">*</span></label>
+            <div class="field-phone">
+              <span class="field-prefix">+962</span>
+              <input class="field-input" type="tel" id="phone" name="phone" inputmode="tel" placeholder="7X XXXX XXXX" autocomplete="tel" />
+            </div>
             <span class="field-error"></span>
           </div>
 
-          <div class="field" data-field="phone">
-            <label class="field-label" for="phone">WhatsApp / Phone <span class="req">*</span></label>
-            <input class="field-input" type="tel" id="phone" name="phone" required placeholder="+962 ..." autocomplete="tel" />
+          <div class="field full" data-field="occasion">
+            <label class="field-label">Occasion <span class="req">*</span></label>
+            <div class="chips" id="occasion-chips" role="group" aria-label="Occasion">
+              <button type="button" class="chip" data-value="Wedding">Wedding</button>
+              <button type="button" class="chip" data-value="Gala">Gala</button>
+              <button type="button" class="chip" data-value="Corporate Event">Corporate Event</button>
+              <button type="button" class="chip" data-value="Red Carpet / Premiere">Red Carpet / Premiere</button>
+              <button type="button" class="chip" data-value="Brand Activation">Brand Activation</button>
+              <button type="button" class="chip" data-value="Product Shoot">Product Shoot</button>
+              <button type="button" class="chip" data-value="Influencer Shoot">Influencer Shoot</button>
+              <button type="button" class="chip" data-value="Other">Other</button>
+            </div>
+            <input type="hidden" name="occasion" id="occasion" value="" />
+            <span class="field-error"></span>
+          </div>
+
+          <div class="field" data-field="email">
+            <label class="field-label" for="email">Email <span class="opt">optional</span></label>
+            <input class="field-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" />
             <span class="field-error"></span>
           </div>
 
           <div class="field" data-field="shoot_date">
-            <label class="field-label" for="date">Shoot Date <span class="req">*</span></label>
-            <input class="field-input" type="date" id="date" name="shoot_date" required />
+            <label class="field-label" for="date">Shoot Date <span class="opt">optional</span></label>
+            <input class="field-input" type="date" id="date" name="shoot_date" />
+            <label class="flex-toggle"><input type="checkbox" id="flex-date" /> <span>I'm flexible / not sure yet</span></label>
             <span class="field-error"></span>
           </div>
 
-          <div class="field" data-field="occasion">
-            <label class="field-label" for="type">Occasion <span class="req">*</span></label>
-            <select class="field-select" id="type" name="occasion" required>
-              <option value="" disabled selected>Select...</option>
-              <option value="Wedding">Wedding</option>
-              <option value="Gala">Gala</option>
-              <option value="Corporate Event">Corporate Event</option>
-              <option value="Red Carpet / Premiere">Red Carpet / Premiere</option>
-              <option value="Brand Activation">Brand Activation</option>
-              <option value="Product Shoot">Product Shoot</option>
-              <option value="Influencer Shoot">Influencer Shoot</option>
-              <option value="Other">Other</option>
-            </select>
-            <span class="field-error"></span>
-          </div>
-
-          <div class="field" data-field="location">
-            <label class="field-label" for="venue">Location <span class="req">*</span></label>
-            <input class="field-input" type="text" id="venue" name="location" required placeholder="Venue, studio, or city" />
+          <div class="field full" data-field="location">
+            <label class="field-label" for="venue">Location <span class="opt">optional</span></label>
+            <input class="field-input" type="text" id="venue" name="location" placeholder="Venue, studio, or city" />
             <span class="field-error"></span>
           </div>
 
           <div class="field full" data-field="notes">
-            <label class="field-label" for="notes">Tell us your vision</label>
+            <label class="field-label" for="notes">Tell us your vision <span class="opt">optional</span></label>
             <textarea class="field-textarea" id="notes" name="notes" rows="3" placeholder="The look, the feel, the moment you're after..."></textarea>
             <span class="field-error"></span>
           </div>
@@ -170,7 +174,7 @@
 
         <div class="submit-row">
           <button type="submit" class="submit-btn" id="submit-btn">Send Inquiry</button>
-          <p class="submit-note">We'll review and call you back, usually within 24 hours.</p>
+          <p class="submit-note">Takes ~30 seconds · no deposit to inquire. We'll call you back, usually within 24 hours.</p>
         </div>
 
         <div class="form-success">
