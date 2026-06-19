@@ -35,6 +35,24 @@
     <!-- STAT CARDS (click to filter) -->
     <section class="stats" id="stats"><!-- rendered by JS --></section>
 
+    <!-- ANALYTICS COMMAND CENTER -->
+    <section class="analytics" id="analytics">
+      <div class="an-card an-trend">
+        <div class="an-head"><span class="an-title">Inquiries · last 14 days</span><span class="an-sum" id="an-trend-sum"></span></div>
+        <svg class="an-chart" id="an-trend-svg" viewBox="0 0 600 150" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="an-axis" id="an-trend-axis"></div>
+      </div>
+      <div class="an-card">
+        <div class="an-head"><span class="an-title">By occasion</span></div>
+        <div class="an-bars" id="an-occ"></div>
+      </div>
+      <div class="an-card">
+        <div class="an-head"><span class="an-title">Pipeline</span></div>
+        <div class="an-pipebar" id="an-pipe"></div>
+        <div class="an-legend" id="an-legend"></div>
+      </div>
+    </section>
+
     <!-- TOOLBAR -->
     <div class="toolbar">
       <input
@@ -43,29 +61,36 @@
         id="search"
         placeholder="Search name, email, phone, location, occasion..."
       />
+      <div class="view-toggle" id="view-toggle">
+        <button class="vt active" data-view="table" type="button">▤ Table</button>
+        <button class="vt" data-view="board" type="button">▦ Board</button>
+      </div>
       <span class="meta" id="result-count"></span>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrap">
-      <table class="bookings">
-        <thead>
-          <tr>
-            <th>Client</th>
-            <th class="hide-sm">Occasion</th>
-            <th class="hide-sm">Shoot Date</th>
-            <th class="hide-sm">Location</th>
-            <th>Status</th>
-            <th class="hide-sm">Received</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <div class="state" id="state" style="display:none;"></div>
+    <!-- TABLE VIEW -->
+    <div class="view-table" id="view-table">
+      <div class="table-wrap">
+        <table class="bookings">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th class="hide-sm">Occasion</th>
+              <th class="hide-sm">Shoot Date</th>
+              <th class="hide-sm">Location</th>
+              <th>Status</th>
+              <th class="hide-sm">Received</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="state" id="state" style="display:none;"></div>
+      </div>
+      <div class="pager" id="pager"></div>
     </div>
 
-    <!-- PAGER -->
-    <div class="pager" id="pager"></div>
+    <!-- BOARD (KANBAN) VIEW -->
+    <div class="board" id="board" hidden><!-- rendered by JS --></div>
   </main>
 
   <!-- DETAIL DRAWER -->

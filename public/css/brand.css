@@ -607,3 +607,104 @@ img, svg { max-width: 100%; }
   .hero-footer { flex-direction: column; align-items: flex-start; }
   .submit-btn { letter-spacing: 0.22em; padding: 20px 30px; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CINEMATIC HERO  —  light rays · dust · robotic arm · cursor spotlight ·
+   metallic sheen · boot-up aperture
+   ════════════════════════════════════════════════════════════════════════════ */
+@property --iris { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+
+.hero { position: relative; overflow: hidden; }
+.hero-top, .hero-footer { position: relative; z-index: 2; }
+.hero-top { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+
+.hero-fx { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+
+/* Volumetric light rays slowly drifting from the upper right. */
+.hero-rays {
+  position: absolute; inset: -40%;
+  background:
+    conic-gradient(from 210deg at 72% 18%,
+      transparent 0deg, rgba(255, 131, 64, 0.10) 16deg, transparent 38deg,
+      transparent 150deg, rgba(255, 92, 0, 0.06) 188deg, transparent 214deg);
+  filter: blur(46px);
+  opacity: 0.75;
+  animation: rays-drift 30s linear infinite;
+}
+@keyframes rays-drift { to { transform: rotate(360deg); } }
+
+/* Floating dust motes (canvas). */
+.hero-particles { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.7; }
+
+/* Robotic camera arm — a slow craning motif on the right. */
+.hero-arm {
+  position: absolute;
+  right: -2%; bottom: -4%;
+  height: 108%; width: auto;
+  color: var(--silver);
+  opacity: 0.16;
+  filter: drop-shadow(0 0 30px rgba(255, 92, 0, 0.12));
+}
+
+/* Soft light that tracks the cursor. */
+.hero-spot {
+  position: absolute; inset: 0;
+  background: radial-gradient(280px circle at var(--spot-x, 50%) var(--spot-y, 28%),
+    rgba(255, 131, 64, 0.16), rgba(255, 92, 0, 0.05) 42%, transparent 66%);
+  opacity: 0; transition: opacity 0.45s ease;
+}
+.hero.spot-on .hero-spot { opacity: 1; }
+
+/* Metallic sheen sweeping across the accent word. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero-title .accent {
+    background: linear-gradient(115deg,
+      var(--deep-fire) 0%, var(--signal-orange) 28%, #ffd9b3 45%,
+      var(--amber-glow) 56%, var(--signal-orange) 74%, var(--deep-fire) 100%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    animation: sheen 6.5s ease-in-out infinite;
+  }
+}
+@keyframes sheen { 0%, 100% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
+
+@media (max-width: 720px) { .hero-arm { display: none; } }
+
+/* ── Boot-up aperture overlay ───────────────────────────────────────────────── */
+body.booting { overflow: hidden; }
+.boot {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--void); /* solid base — always opaque */
+  cursor: pointer;
+  /* Aperture iris: a transparent hole that grows to reveal the page. */
+  -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--iris), #000 calc(var(--iris) + 0.6%));
+          mask: radial-gradient(circle at 50% 50%, transparent var(--iris), #000 calc(var(--iris) + 0.6%));
+  transition: --iris 0.75s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.55s ease 0.15s;
+}
+.boot.open { --iris: 80%; opacity: 0; }
+.boot-core { text-align: center; transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+.boot.open .boot-core { opacity: 0; transform: scale(1.25); }
+.boot-lens { width: 120px; height: 120px; display: block; margin: 0 auto 26px; color: var(--signal-orange); animation: boot-spin 3.4s linear infinite; }
+.boot-lens .boot-ring { fill: none; stroke: var(--slate); stroke-width: 1.5; }
+.boot-lens .boot-ring-2 { fill: none; stroke: var(--slate); stroke-width: 1.5; stroke-dasharray: 3 9; }
+.boot-lens .boot-arc { fill: none; stroke: var(--signal-orange); stroke-width: 2.5; stroke-linecap: round; }
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+.boot-logo { height: 26px; width: auto; display: block; margin: 0 auto 18px; }
+.boot-readout { display: flex; flex-direction: column; gap: 7px; }
+.boot-tc { font-family: var(--font-body); font-size: 13px; letter-spacing: 0.3em; color: var(--platinum); }
+.boot-status {
+  font-family: var(--font-body); font-size: 10px; font-weight: 500;
+  letter-spacing: 0.4em; text-transform: uppercase; color: var(--signal-orange);
+  animation: boot-blink 1.1s steps(2, start) infinite;
+}
+@keyframes boot-blink { 50% { opacity: 0.3; } }
+.boot-bar { width: 180px; height: 1px; background: var(--slate); margin: 22px auto 0; overflow: hidden; }
+.boot-bar i { display: block; height: 100%; width: 0; background: var(--signal-orange); animation: boot-fill 1.2s cubic-bezier(0.5, 0, 0.2, 1) forwards; }
+@keyframes boot-fill { to { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rays, .boot-lens, .hero-title .accent { animation: none; }
+  .boot { display: none; }
+}

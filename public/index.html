@@ -16,6 +16,23 @@
 </head>
 <body>
 
+  <!-- CINEMATIC BOOT (once per session) -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="boot-core">
+      <svg class="boot-lens" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="boot-ring" cx="60" cy="60" r="54" />
+        <circle class="boot-ring-2" cx="60" cy="60" r="44" />
+        <path class="boot-arc" d="M60 6 A54 54 0 0 1 114 60" />
+      </svg>
+      <img class="boot-logo" src="/assets/logo.png" alt="GLAMBOT" />
+      <div class="boot-readout">
+        <span class="boot-tc" id="boot-tc">00:00:00:00</span>
+        <span class="boot-status">Calibrating Arm</span>
+      </div>
+      <div class="boot-bar"><i></i></div>
+    </div>
+  </div>
+
   <!-- TOP NAV -->
   <header class="topbar">
     <a href="/" class="topbar-link"><img class="topbar-logo" src="/assets/logo.png" alt="GLAMBOT" /></a>
@@ -23,8 +40,39 @@
   </header>
 
   <!-- HERO -->
-  <section class="hero">
-    <div>
+  <section class="hero" id="hero">
+    <div class="hero-fx" aria-hidden="true">
+      <div class="hero-rays"></div>
+      <canvas class="hero-particles" id="hero-particles"></canvas>
+      <svg class="hero-arm" viewBox="0 0 460 520" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+        <g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M300 488 L380 488" stroke-width="12" />
+          <path d="M340 488 L340 360" />
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="-7 340 360; 6 340 360; -7 340 360" keyTimes="0;0.5;1"
+              dur="17s" calcMode="spline" keySplines="0.45 0 0.2 1; 0.45 0 0.2 1" repeatCount="indefinite" />
+            <path d="M340 360 L386 374" />
+            <circle cx="393" cy="376" r="9" fill="currentColor" stroke="none" />
+            <path d="M340 360 L150 306" />
+            <g>
+              <animateTransform attributeName="transform" type="rotate"
+                values="9 150 306; -11 150 306; 9 150 306" keyTimes="0;0.5;1"
+                dur="13s" calcMode="spline" keySplines="0.45 0 0.2 1; 0.45 0 0.2 1" repeatCount="indefinite" />
+              <path d="M150 306 L132 356" />
+              <g stroke-width="6">
+                <rect x="104" y="352" width="58" height="40" rx="7" />
+                <circle cx="133" cy="372" r="11" />
+                <path d="M150 365 L168 372 L150 379 Z" fill="#FF5C00" stroke="none" />
+              </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+      <div class="hero-spot" id="hero-spot"></div>
+    </div>
+
+    <div class="hero-top">
       <div class="hero-meta-row">
         <span class="meta meta-orange">[ BOOKING INQUIRY / 2026 ]</span>
         <span class="meta" id="timecode">[ 00:00:00 ]</span>
@@ -159,6 +207,7 @@
   </footer>
 
   <script src="/js/toast.js"></script>
+  <script src="/js/hero.js"></script>
   <script src="/js/form.js"></script>
 </body>
 </html>

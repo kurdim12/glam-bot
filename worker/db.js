@@ -102,3 +102,17 @@ export async function stats(env) {
   }
   return { total: totalRow ? totalRow.n : 0, byStatus };
 }
+
+/** Data for the analytics panel: 14-day trend + occasion breakdown. */
+export async function analytics(env) {
+  const cutoff = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  const dailyRes = await env.DB.prepare(
+    `SELECT substr(created_at, 1, 10) AS day, COUNT(*) AS n
+     FROM bookings WHERE created_at >= ? GROUP BY day ORDER BY day`
+  ).bind(cutoff).all();
+  const occRes = await env.DB.prepare(
+    `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, COUNT(*) AS n
+     FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
+  ).all();
+  return { daily: dailyRes.results || [], byOccasion: occRes.results || [] };
+}

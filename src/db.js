@@ -133,6 +133,24 @@ function stats() {
   return { total, byStatus };
 }
 
+/** Data for the analytics panel: 14-day trend + occasion breakdown. */
+function analytics() {
+  const cutoff = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  const daily = db
+    .prepare(
+      `SELECT substr(created_at, 1, 10) AS day, COUNT(*) AS n
+       FROM bookings WHERE created_at >= ? GROUP BY day ORDER BY day`
+    )
+    .all(cutoff);
+  const byOccasion = db
+    .prepare(
+      `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, COUNT(*) AS n
+       FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
+    )
+    .all();
+  return { daily, byOccasion };
+}
+
 module.exports = {
   db,
   STATUSES,
@@ -143,4 +161,5 @@ module.exports = {
   updateBooking,
   deleteBooking,
   stats,
+  analytics,
 };

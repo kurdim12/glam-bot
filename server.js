@@ -81,6 +81,10 @@ app.get('/api/admin/stats', auth.requireAuth, (req, res) => {
   res.json({ ok: true, ...db.stats() });
 });
 
+app.get('/api/admin/analytics', auth.requireAuth, (req, res) => {
+  res.json({ ok: true, ...db.analytics() });
+});
+
 app.get('/api/admin/bookings', auth.requireAuth, (req, res) => {
   const { status, q } = req.query;
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);

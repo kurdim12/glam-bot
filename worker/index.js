@@ -106,6 +106,10 @@ export default {
         return json({ ok: true, ...(await db.stats(env)) });
       }
 
+      if (pathname === '/api/admin/analytics' && method === 'GET') {
+        return json({ ok: true, ...(await db.analytics(env)) });
+      }
+
       if (pathname === '/api/admin/bookings' && method === 'GET') {
         const status = url.searchParams.get('status') || undefined;
         const q = url.searchParams.get('q') || undefined;
