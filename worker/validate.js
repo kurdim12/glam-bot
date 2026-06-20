@@ -15,12 +15,14 @@ export function validateBooking(body) {
     notes: str(body.notes).slice(0, 2000),
   };
 
-  // Required: name, phone, occasion. Email optional (valid if given).
+  // Required: name, phone, occasion, email, shoot_date.
   if (!value.name) errors.name = 'Please tell us your name.';
   if (!value.phone) errors.phone = 'A phone or WhatsApp number is required.';
   if (!value.occasion) errors.occasion = 'Pick the type of shoot.';
-  if (value.email && !EMAIL_RE.test(value.email)) errors.email = 'That email does not look right.';
-  // shoot_date is free text now ("Flexible" or a date) — no strict check.
+  if (!value.email) errors.email = 'An email address is required.';
+  else if (!EMAIL_RE.test(value.email)) errors.email = 'That email does not look right.';
+  // shoot_date is free text ("Flexible" or a date) — required, but not parsed.
+  if (!value.shoot_date) errors.shoot_date = 'Pick a date, or tick "flexible".';
 
   if (Object.keys(errors).length) return { ok: false, errors };
   return { ok: true, value };

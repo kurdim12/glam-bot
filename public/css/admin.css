@@ -571,6 +571,86 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
 .an-leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--silver); }
 .an-leg i { width: 9px; height: 9px; border-radius: 50%; }
 
+/* ─── Pivot table (occasion × status) ─────────────────────────────────────── */
+.pivot-section { margin-bottom: 40px; }
+.pivot-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.pivot-clear {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--signal-orange);
+  background: rgba(255, 92, 0, 0.1);
+  border: 1px solid rgba(255, 92, 0, 0.4);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.pivot-clear:hover { background: rgba(255, 92, 0, 0.18); border-color: var(--signal-orange); }
+
+.pivot-wrap { border: 1px solid var(--slate); overflow-x: auto; }
+table.pivot { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pivot thead th {
+  text-align: right;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warm-grey);
+  padding: 14px 16px;
+  background: var(--graphite);
+  border-bottom: 1px solid var(--slate);
+  white-space: nowrap;
+}
+.pivot thead th.pivot-occ-h { text-align: left; }
+.pivot td {
+  padding: 13px 16px;
+  text-align: right;
+  color: var(--silver);
+  border-bottom: 1px solid var(--slate);
+  white-space: nowrap;
+}
+.pivot td.pivot-occ { text-align: left; color: var(--platinum); font-weight: 500; }
+.pivot td.zero { color: var(--warm-grey); opacity: 0.5; }
+.pivot .pivot-total-col { color: var(--platinum); font-weight: 600; border-left: 1px solid var(--slate); }
+.pivot thead th.pivot-total-col { color: var(--silver); }
+
+.pivot tbody tr { cursor: pointer; transition: background 0.14s ease, box-shadow 0.14s ease; }
+.pivot tbody tr:hover { background: linear-gradient(90deg, rgba(255, 92, 0, 0.05), transparent 60%); }
+.pivot tbody tr.active {
+  background: linear-gradient(90deg, rgba(255, 92, 0, 0.1), transparent 70%);
+  box-shadow: inset 3px 0 0 var(--signal-orange);
+}
+.pivot tbody tr.active td.pivot-occ { color: var(--signal-orange); }
+
+.pivot tfoot td {
+  padding: 13px 16px;
+  text-align: right;
+  border-top: 1px solid var(--slate);
+  border-bottom: none;
+  background: var(--graphite);
+  color: var(--platinum);
+  font-weight: 600;
+}
+.pivot tfoot td.pivot-occ {
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warm-grey);
+  font-weight: 500;
+}
+.pivot-empty { padding: 32px 16px !important; text-align: center !important; color: var(--warm-grey); }
+
 /* View toggle */
 .view-toggle { display: inline-flex; border: 1px solid var(--slate); flex-shrink: 0; }
 .vt { background: transparent; border: none; color: var(--warm-grey); font-family: var(--font-display); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 16px; cursor: pointer; transition: background 0.2s, color 0.2s; }

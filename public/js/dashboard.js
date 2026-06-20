@@ -19,7 +19,7 @@ const STATUS_COLOR = {
 
 const PAGE_SIZE = 50;
 const state = {
-  status: '', q: '', bookings: [],
+  status: '', q: '', occasion: '', bookings: [],
   stats: { total: 0, byStatus: {} },
   openId: null,
   page: 1, pages: 1, total: 0,
@@ -78,6 +78,7 @@ async function loadBookings() {
   const params = new URLSearchParams();
   if (state.status) params.set('status', state.status);
   if (state.q) params.set('q', state.q);
+  if (state.occasion) params.set('occasion', state.occasion);
   params.set('page', state.page);
   params.set('limit', PAGE_SIZE);
   const res = await api('/api/admin/bookings?' + params.toString());
@@ -133,6 +134,7 @@ async function loadAnalytics() {
   const data = await res.json();
   renderTrend(data.daily || []);
   renderOccasion(data.byOccasion || []);
+  renderPivot(data.occasionPivot || []);
   renderPipeline();
 }
 
@@ -180,6 +182,65 @@ function renderOccasion(list) {
   requestAnimationFrame(() => el.querySelectorAll('.an-bar-fill').forEach((f) => { f.style.width = f.dataset.w; }));
 }
 
+/**
+ * Pivot table: occasions down the side, the status pipeline across the top,
+ * counts in the cells, totals on the edges. Clicking an occasion row filters
+ * the bookings list (and board) to that occasion.
+ */
+function renderPivot(rows) {
+  const table = document.getElementById('pivot');
+  const clearBtn = document.getElementById('pivot-clear');
+
+  // occasion -> { status: n }
+  const byOcc = {};
+  for (const r of rows) {
+    (byOcc[r.occasion] || (byOcc[r.occasion] = {}))[r.status] = r.n;
+  }
+  const occasions = Object.keys(byOcc);
+
+  if (!occasions.length) {
+    table.innerHTML = `<tbody><tr><td class="pivot-empty">No inquiries yet.</td></tr></tbody>`;
+    clearBtn.hidden = true;
+    return;
+  }
+
+  const rowTotal = (occ) => STATUSES.reduce((s, k) => s + (byOcc[occ][k] || 0), 0);
+  occasions.sort((a, b) => rowTotal(b) - rowTotal(a) || a.localeCompare(b));
+
+  const colTotals = Object.fromEntries(STATUSES.map((k) => [k, 0]));
+  let grand = 0;
+
+  const head =
+    `<thead><tr><th class="pivot-occ-h">Occasion</th>` +
+    STATUSES.map((k) => `<th>${STATUS_LABEL[k]}</th>`).join('') +
+    `<th class="pivot-total-col">Total</th></tr></thead>`;
+
+  const body = occasions
+    .map((occ) => {
+      const rt = rowTotal(occ);
+      grand += rt;
+      const cells = STATUSES.map((k) => {
+        const n = byOcc[occ][k] || 0;
+        colTotals[k] += n;
+        return `<td class="${n ? '' : 'zero'}">${n || '·'}</td>`;
+      }).join('');
+      const active = state.occasion === occ ? ' active' : '';
+      return `<tr class="pivot-row${active}" data-occasion="${esc(occ)}">
+        <td class="pivot-occ">${esc(occ)}</td>${cells}
+        <td class="pivot-total-col">${rt}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const foot =
+    `<tfoot><tr><td class="pivot-occ">All</td>` +
+    STATUSES.map((k) => `<td>${colTotals[k]}</td>`).join('') +
+    `<td class="pivot-total-col">${grand}</td></tr></tfoot>`;
+
+  table.innerHTML = head + `<tbody>${body}</tbody>` + foot;
+  clearBtn.hidden = !state.occasion;
+}
+
 function renderPipeline() {
   const by = state.stats.byStatus || {};
   const total = STATUSES.reduce((s, k) => s + (by[k] || 0), 0);
@@ -201,12 +262,13 @@ function renderTable() {
   const stateEl = document.getElementById('state');
   const count = document.getElementById('result-count');
 
-  count.textContent = `[ ${state.total.toLocaleString()} ${state.status || state.q ? 'MATCHED' : 'TOTAL'} ]`;
+  const filtered = state.status || state.q || state.occasion;
+  count.textContent = `[ ${state.total.toLocaleString()} ${filtered ? 'MATCHED' : 'TOTAL'} ]`;
 
   if (!state.bookings.length) {
     tbody.innerHTML = '';
     stateEl.style.display = 'block';
-    stateEl.textContent = state.q || state.status
+    stateEl.textContent = filtered
       ? 'No bookings match this filter.'
       : 'No inquiries yet. They will appear here the moment one comes in.';
     return;
@@ -373,9 +435,10 @@ function boardCard(b) {
 async function loadBoard() {
   const board = document.getElementById('board');
   if (!board.children.length) board.innerHTML = '<div class="bcol-empty">Loading…</div>';
+  const occParam = state.occasion ? `&occasion=${encodeURIComponent(state.occasion)}` : '';
   const results = await Promise.all(
     STATUSES.map((s) =>
-      api(`/api/admin/bookings?status=${s}&limit=50`)
+      api(`/api/admin/bookings?status=${s}&limit=50${occParam}`)
         .then((r) => r.json())
         .then((d) => ({ s, items: d.bookings || [], total: d.total || 0 }))
     )
@@ -411,6 +474,27 @@ document.getElementById('stats').addEventListener('click', (e) => {
   renderStats();
   applyFilter();
 });
+
+/* Pivot: click an occasion row to filter the list (click again to clear). */
+function applyOccasion(next) {
+  state.occasion = next;
+  const pivot = document.getElementById('pivot');
+  pivot.querySelectorAll('.pivot-row').forEach((r) =>
+    r.classList.toggle('active', !!next && r.dataset.occasion === next)
+  );
+  document.getElementById('pivot-clear').hidden = !next;
+  applyFilter();
+  if (state.view === 'board') loadBoard();
+}
+
+document.getElementById('pivot').addEventListener('click', (e) => {
+  const row = e.target.closest('.pivot-row');
+  if (!row) return;
+  const occ = row.dataset.occasion;
+  applyOccasion(state.occasion === occ ? '' : occ);
+});
+
+document.getElementById('pivot-clear').addEventListener('click', () => applyOccasion(''));
 
 document.getElementById('pager').addEventListener('click', (e) => {
   const btn = e.target.closest('.pg-btn');

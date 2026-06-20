@@ -55,14 +55,19 @@ function getBooking(id) {
   return db.prepare('SELECT * FROM bookings WHERE id = ?').get(id) || null;
 }
 
-/** Build the shared WHERE clause + bound params for a status/search filter. */
-function buildWhere({ status, q } = {}) {
+/** Build the shared WHERE clause + bound params for a status/occasion/search filter. */
+function buildWhere({ status, q, occasion } = {}) {
   const where = [];
   const params = [];
 
   if (status && STATUSES.includes(status)) {
     where.push('status = ?');
     params.push(status);
+  }
+  if (occasion && occasion.trim()) {
+    // Match the same bucket the pivot/analytics show — blank occasions roll up to 'Other'.
+    where.push("COALESCE(NULLIF(occasion, ''), 'Other') = ?");
+    params.push(occasion.trim());
   }
   if (q && q.trim()) {
     const like = `%${q.trim()}%`;
@@ -82,8 +87,8 @@ function buildWhere({ status, q } = {}) {
  * chronological and index-friendly (idx_bookings_created) — no per-row
  * datetime() call, which keeps this fast at tens of thousands of rows.
  */
-function listBookings({ status, q, limit, offset } = {}) {
-  const { clause, params } = buildWhere({ status, q });
+function listBookings({ status, q, occasion, limit, offset } = {}) {
+  const { clause, params } = buildWhere({ status, q, occasion });
   const args = [...params];
 
   let sql = 'SELECT * FROM bookings' + clause + ' ORDER BY created_at DESC, id DESC';
@@ -95,8 +100,8 @@ function listBookings({ status, q, limit, offset } = {}) {
 }
 
 /** Count bookings matching the same filters (drives pagination totals). */
-function countBookings({ status, q } = {}) {
-  const { clause, params } = buildWhere({ status, q });
+function countBookings({ status, q, occasion } = {}) {
+  const { clause, params } = buildWhere({ status, q, occasion });
   return db.prepare('SELECT COUNT(*) AS n FROM bookings' + clause).get(...params).n;
 }
 
@@ -148,7 +153,14 @@ function analytics() {
        FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
     )
     .all();
-  return { daily, byOccasion };
+  // Occasion × status counts — drives the dashboard pivot table.
+  const occasionPivot = db
+    .prepare(
+      `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, status, COUNT(*) AS n
+       FROM bookings GROUP BY occasion, status`
+    )
+    .all();
+  return { daily, byOccasion, occasionPivot };
 }
 
 module.exports = {

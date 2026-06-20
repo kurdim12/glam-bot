@@ -41,12 +41,17 @@ export async function getBooking(env, id) {
   return (await env.DB.prepare('SELECT * FROM bookings WHERE id = ?').bind(id).first()) || null;
 }
 
-function buildWhere({ status, q } = {}) {
+function buildWhere({ status, q, occasion } = {}) {
   const where = [];
   const params = [];
   if (status && STATUSES.includes(status)) {
     where.push('status = ?');
     params.push(status);
+  }
+  if (occasion && occasion.trim()) {
+    // Match the same bucket the pivot/analytics show — blank occasions roll up to 'Other'.
+    where.push("COALESCE(NULLIF(occasion, ''), 'Other') = ?");
+    params.push(occasion.trim());
   }
   if (q && q.trim()) {
     const like = `%${q.trim()}%`;
@@ -56,8 +61,8 @@ function buildWhere({ status, q } = {}) {
   return { clause: where.length ? ` WHERE ${where.join(' AND ')}` : '', params };
 }
 
-export async function listBookings(env, { status, q, limit, offset } = {}) {
-  const { clause, params } = buildWhere({ status, q });
+export async function listBookings(env, { status, q, occasion, limit, offset } = {}) {
+  const { clause, params } = buildWhere({ status, q, occasion });
   const args = [...params];
   let sql = 'SELECT * FROM bookings' + clause + ' ORDER BY created_at DESC, id DESC';
   if (limit != null) {
@@ -68,8 +73,8 @@ export async function listBookings(env, { status, q, limit, offset } = {}) {
   return res.results || [];
 }
 
-export async function countBookings(env, { status, q } = {}) {
-  const { clause, params } = buildWhere({ status, q });
+export async function countBookings(env, { status, q, occasion } = {}) {
+  const { clause, params } = buildWhere({ status, q, occasion });
   const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM bookings' + clause).bind(...params).first();
   return row ? row.n : 0;
 }
@@ -114,5 +119,14 @@ export async function analytics(env) {
     `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, COUNT(*) AS n
      FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
   ).all();
-  return { daily: dailyRes.results || [], byOccasion: occRes.results || [] };
+  // Occasion × status counts — drives the dashboard pivot table.
+  const pivotRes = await env.DB.prepare(
+    `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, status, COUNT(*) AS n
+     FROM bookings GROUP BY occasion, status`
+  ).all();
+  return {
+    daily: dailyRes.results || [],
+    byOccasion: occRes.results || [],
+    occasionPivot: pivotRes.results || [],
+  };
 }
