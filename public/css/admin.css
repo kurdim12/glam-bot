@@ -571,85 +571,183 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
 .an-leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--silver); }
 .an-leg i { width: 9px; height: 9px; border-radius: 50%; }
 
-/* ─── Pivot table (occasion × status) ─────────────────────────────────────── */
-.pivot-section { margin-bottom: 40px; }
+/* ─── Pivot view (occasion × status heatmap) ──────────────────────────────── */
 .pivot-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
+.pivot-title {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 22px;
+  letter-spacing: 0.01em;
+  color: var(--platinum);
+  text-transform: uppercase;
+}
+.pivot-title em { color: var(--signal-orange); font-style: normal; margin: 0 4px; }
 .pivot-clear {
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--signal-orange);
   background: rgba(255, 92, 0, 0.1);
   border: 1px solid rgba(255, 92, 0, 0.4);
-  padding: 6px 12px;
+  padding: 8px 14px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 .pivot-clear:hover { background: rgba(255, 92, 0, 0.18); border-color: var(--signal-orange); }
+.pivot-hint {
+  margin-top: 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--warm-grey);
+}
 
-.pivot-wrap { border: 1px solid var(--slate); overflow-x: auto; }
-table.pivot { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pivot-wrap {
+  border: 1px solid rgba(60, 60, 58, 0.7);
+  border-radius: 4px;
+  overflow: hidden;
+  overflow-x: auto;
+  background: linear-gradient(165deg, var(--charcoal), #1c1c1a);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+}
+table.pivot { width: 100%; border-collapse: collapse; font-size: 14px; }
+
 .pivot thead th {
-  text-align: right;
+  text-align: center;
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--warm-grey);
-  padding: 14px 16px;
-  background: var(--graphite);
+  color: var(--silver);
+  padding: 16px 14px;
+  background: linear-gradient(180deg, var(--graphite), rgba(26, 26, 26, 0.85));
   border-bottom: 1px solid var(--slate);
   white-space: nowrap;
 }
 .pivot thead th.pivot-occ-h { text-align: left; }
-.pivot td {
-  padding: 13px 16px;
-  text-align: right;
-  color: var(--silver);
-  border-bottom: 1px solid var(--slate);
-  white-space: nowrap;
+.pivot-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
 }
-.pivot td.pivot-occ { text-align: left; color: var(--platinum); font-weight: 500; }
-.pivot td.zero { color: var(--warm-grey); opacity: 0.5; }
-.pivot .pivot-total-col { color: var(--platinum); font-weight: 600; border-left: 1px solid var(--slate); }
-.pivot thead th.pivot-total-col { color: var(--silver); }
 
-.pivot tbody tr { cursor: pointer; transition: background 0.14s ease, box-shadow 0.14s ease; }
-.pivot tbody tr:hover { background: linear-gradient(90deg, rgba(255, 92, 0, 0.05), transparent 60%); }
-.pivot tbody tr.active {
-  background: linear-gradient(90deg, rgba(255, 92, 0, 0.1), transparent 70%);
-  box-shadow: inset 3px 0 0 var(--signal-orange);
+.pivot td {
+  padding: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--silver);
+  border-bottom: 1px solid rgba(60, 60, 58, 0.55);
+  white-space: nowrap;
+  height: 52px;
 }
+.pivot td.hot {
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.pivot td.zero { color: var(--warm-grey); opacity: 0.35; font-size: 16px; }
+.pivot td.pivot-occ {
+  text-align: left;
+  padding: 0 18px;
+  color: var(--platinum);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 15px;
+}
+
+/* Total column — number + a little intensity bar. */
+.pivot .pivot-total-col { border-left: 1px solid var(--slate); padding: 0 16px; min-width: 92px; }
+.pivot thead th.pivot-total-col { color: var(--silver); }
+.pivot-total-n { display: block; font-weight: 700; font-size: 16px; color: var(--platinum); }
+.pivot-total-bar {
+  display: block;
+  height: 3px;
+  margin-top: 6px;
+  background: rgba(60, 60, 58, 0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.pivot-total-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--deep-fire), var(--amber-glow));
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pivot tbody tr { cursor: pointer; transition: box-shadow 0.16s ease, background 0.16s ease; }
+.pivot tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+.pivot tbody tr:hover td.pivot-occ { color: #fff; }
+.pivot tbody tr.active { box-shadow: inset 3px 0 0 var(--signal-orange); background: rgba(255, 92, 0, 0.06); }
 .pivot tbody tr.active td.pivot-occ { color: var(--signal-orange); }
 
 .pivot tfoot td {
-  padding: 13px 16px;
-  text-align: right;
+  text-align: center;
+  padding: 16px 14px;
   border-top: 1px solid var(--slate);
-  border-bottom: none;
-  background: var(--graphite);
+  background: linear-gradient(0deg, var(--graphite), rgba(26, 26, 26, 0.85));
   color: var(--platinum);
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .pivot tfoot td.pivot-occ {
   text-align: left;
+  padding: 16px 18px;
   font-family: var(--font-body);
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--warm-grey);
-  font-weight: 500;
+  font-weight: 600;
 }
-.pivot-empty { padding: 32px 16px !important; text-align: center !important; color: var(--warm-grey); }
+.pivot tfoot td.pivot-total-col { color: var(--signal-orange); }
+.pivot-empty { padding: 40px 16px !important; text-align: center !important; color: var(--warm-grey); height: auto !important; }
+
+/* Active-occasion filter chip (toolbar — visible in every view). */
+.active-occ {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 14px;
+  background: rgba(255, 92, 0, 0.1);
+  border: 1px solid rgba(255, 92, 0, 0.4);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--silver);
+  white-space: nowrap;
+}
+.active-occ[hidden] { display: none; }
+.active-occ b { color: var(--signal-orange); font-weight: 600; }
+.occ-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 92, 0, 0.2);
+  color: var(--signal-orange);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.occ-x:hover { background: var(--signal-orange); color: var(--void); }
 
 /* View toggle */
 .view-toggle { display: inline-flex; border: 1px solid var(--slate); flex-shrink: 0; }

@@ -182,10 +182,19 @@ function renderOccasion(list) {
   requestAnimationFrame(() => el.querySelectorAll('.an-bar-fill').forEach((f) => { f.style.width = f.dataset.w; }));
 }
 
+/** "#rrggbb" + alpha -> "rgba(...)" so cells can tint with the status color. */
+function hexA(hex, a) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
 /**
  * Pivot table: occasions down the side, the status pipeline across the top,
- * counts in the cells, totals on the edges. Clicking an occasion row filters
- * the bookings list (and board) to that occasion.
+ * counts in the cells, totals on the edges. Cells are a heatmap (tinted by the
+ * status colour, intensity scaled to the count). Clicking an occasion filters
+ * the bookings list/board to that occasion.
  */
 function renderPivot(rows) {
   const table = document.getElementById('pivot');
@@ -209,10 +218,18 @@ function renderPivot(rows) {
 
   const colTotals = Object.fromEntries(STATUSES.map((k) => [k, 0]));
   let grand = 0;
+  let maxCell = 1;
+  let maxRow = 1;
+  for (const occ of occasions) {
+    maxRow = Math.max(maxRow, rowTotal(occ));
+    for (const k of STATUSES) maxCell = Math.max(maxCell, byOcc[occ][k] || 0);
+  }
 
   const head =
     `<thead><tr><th class="pivot-occ-h">Occasion</th>` +
-    STATUSES.map((k) => `<th>${STATUS_LABEL[k]}</th>`).join('') +
+    STATUSES.map(
+      (k) => `<th><i class="pivot-dot" style="background:${STATUS_COLOR[k]}"></i>${STATUS_LABEL[k]}</th>`
+    ).join('') +
     `<th class="pivot-total-col">Total</th></tr></thead>`;
 
   const body = occasions
@@ -222,18 +239,24 @@ function renderPivot(rows) {
       const cells = STATUSES.map((k) => {
         const n = byOcc[occ][k] || 0;
         colTotals[k] += n;
-        return `<td class="${n ? '' : 'zero'}">${n || '·'}</td>`;
+        if (!n) return `<td class="zero">·</td>`;
+        const alpha = (0.16 + 0.5 * (n / maxCell)).toFixed(3);
+        return `<td class="hot" style="background:${hexA(STATUS_COLOR[k], alpha)};color:${STATUS_COLOR[k]}">${n}</td>`;
       }).join('');
+      const barW = ((rt / maxRow) * 100).toFixed(1);
       const active = state.occasion === occ ? ' active' : '';
       return `<tr class="pivot-row${active}" data-occasion="${esc(occ)}">
         <td class="pivot-occ">${esc(occ)}</td>${cells}
-        <td class="pivot-total-col">${rt}</td>
+        <td class="pivot-total-col">
+          <span class="pivot-total-n">${rt}</span>
+          <span class="pivot-total-bar"><i style="width:${barW}%"></i></span>
+        </td>
       </tr>`;
     })
     .join('');
 
   const foot =
-    `<tfoot><tr><td class="pivot-occ">All</td>` +
+    `<tfoot><tr><td class="pivot-occ">All occasions</td>` +
     STATUSES.map((k) => `<td>${colTotals[k]}</td>`).join('') +
     `<td class="pivot-total-col">${grand}</td></tr></tfoot>`;
 
@@ -460,10 +483,12 @@ function showView(v) {
   state.view = v;
   document.getElementById('view-table').hidden = v !== 'table';
   document.getElementById('board').hidden = v !== 'board';
+  document.getElementById('view-pivot').hidden = v !== 'pivot';
   document.querySelectorAll('.vt').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   document.getElementById('search').style.display = v === 'table' ? '' : 'none';
   document.getElementById('result-count').style.display = v === 'table' ? '' : 'none';
   if (v === 'board') loadBoard();
+  if (v === 'pivot') loadAnalytics();
 }
 
 /* ── Events ─────────────────────────────────────────────────────────────── */
@@ -475,14 +500,26 @@ document.getElementById('stats').addEventListener('click', (e) => {
   applyFilter();
 });
 
-/* Pivot: click an occasion row to filter the list (click again to clear). */
+/* A removable chip in the toolbar shows the active occasion filter in any view. */
+function updateOccChip() {
+  const chip = document.getElementById('active-occ');
+  if (state.occasion) {
+    chip.hidden = false;
+    chip.innerHTML = `<span>Occasion · <b>${esc(state.occasion)}</b></span><button class="occ-x" type="button" aria-label="Clear occasion filter">✕</button>`;
+  } else {
+    chip.hidden = true;
+    chip.innerHTML = '';
+  }
+}
+
+/* Pivot: select an occasion to filter the list (select again to clear). */
 function applyOccasion(next) {
   state.occasion = next;
-  const pivot = document.getElementById('pivot');
-  pivot.querySelectorAll('.pivot-row').forEach((r) =>
+  document.getElementById('pivot').querySelectorAll('.pivot-row').forEach((r) =>
     r.classList.toggle('active', !!next && r.dataset.occasion === next)
   );
   document.getElementById('pivot-clear').hidden = !next;
+  updateOccChip();
   applyFilter();
   if (state.view === 'board') loadBoard();
 }
@@ -491,10 +528,16 @@ document.getElementById('pivot').addEventListener('click', (e) => {
   const row = e.target.closest('.pivot-row');
   if (!row) return;
   const occ = row.dataset.occasion;
-  applyOccasion(state.occasion === occ ? '' : occ);
+  const next = state.occasion === occ ? '' : occ;
+  applyOccasion(next);
+  // Drill straight into the filtered list so the result is visible.
+  if (next) showView('table');
 });
 
 document.getElementById('pivot-clear').addEventListener('click', () => applyOccasion(''));
+document.getElementById('active-occ').addEventListener('click', (e) => {
+  if (e.target.closest('.occ-x')) applyOccasion('');
+});
 
 document.getElementById('pager').addEventListener('click', (e) => {
   const btn = e.target.closest('.pg-btn');
