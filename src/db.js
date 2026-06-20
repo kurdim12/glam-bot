@@ -153,14 +153,7 @@ function analytics() {
        FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
     )
     .all();
-  // Occasion × status counts — drives the dashboard pivot table.
-  const occasionPivot = db
-    .prepare(
-      `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, status, COUNT(*) AS n
-       FROM bookings GROUP BY occasion, status`
-    )
-    .all();
-  return { daily, byOccasion, occasionPivot };
+  return { daily, byOccasion };
 }
 
 module.exports = {

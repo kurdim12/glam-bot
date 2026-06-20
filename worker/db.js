@@ -119,14 +119,8 @@ export async function analytics(env) {
     `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, COUNT(*) AS n
      FROM bookings GROUP BY occasion ORDER BY n DESC, occasion LIMIT 8`
   ).all();
-  // Occasion × status counts — drives the dashboard pivot table.
-  const pivotRes = await env.DB.prepare(
-    `SELECT COALESCE(NULLIF(occasion, ''), 'Other') AS occasion, status, COUNT(*) AS n
-     FROM bookings GROUP BY occasion, status`
-  ).all();
   return {
     daily: dailyRes.results || [],
     byOccasion: occRes.results || [],
-    occasionPivot: pivotRes.results || [],
   };
 }

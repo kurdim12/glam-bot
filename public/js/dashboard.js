@@ -134,8 +134,12 @@ async function loadAnalytics() {
   const data = await res.json();
   renderTrend(data.daily || []);
   renderOccasion(data.byOccasion || []);
-  renderPivot(data.occasionPivot || []);
   renderPipeline();
+  // The pivot lists real client names, so it needs the rows themselves —
+  // not just the aggregate counts the analytics endpoint returns.
+  const pres = await api('/api/admin/bookings?limit=200');
+  const pdata = await pres.json();
+  renderPivot(pdata.bookings || []);
 }
 
 function renderTrend(daily) {
@@ -191,19 +195,21 @@ function hexA(hex, a) {
 }
 
 /**
- * Pivot table: occasions down the side, the status pipeline across the top,
- * counts in the cells, totals on the edges. Cells are a heatmap (tinted by the
- * status colour, intensity scaled to the count). Clicking an occasion filters
- * the bookings list/board to that occasion.
+ * Pivot: occasions down the side, the status pipeline across the top. Each cell
+ * lists the actual clients in that occasion/status bucket as chips (tap a name
+ * to open its detail drawer). Tap an occasion to filter the bookings list/board.
  */
-function renderPivot(rows) {
+function renderPivot(bookings) {
   const table = document.getElementById('pivot');
   const clearBtn = document.getElementById('pivot-clear');
 
-  // occasion -> { status: n }
+  // occasion -> status -> [booking]
   const byOcc = {};
-  for (const r of rows) {
-    (byOcc[r.occasion] || (byOcc[r.occasion] = {}))[r.status] = r.n;
+  for (const b of bookings) {
+    const occ = b.occasion && b.occasion.trim() ? b.occasion.trim() : 'Other';
+    const cols = byOcc[occ] || (byOcc[occ] = {});
+    (cols[b.status] || (cols[b.status] = [])).push(b);
+    state.boardCache[b.id] = b; // so tapping a name opens the drawer instantly
   }
   const occasions = Object.keys(byOcc);
 
@@ -213,17 +219,14 @@ function renderPivot(rows) {
     return;
   }
 
-  const rowTotal = (occ) => STATUSES.reduce((s, k) => s + (byOcc[occ][k] || 0), 0);
+  const cell = (occ, k) => byOcc[occ][k] || [];
+  const rowTotal = (occ) => STATUSES.reduce((s, k) => s + cell(occ, k).length, 0);
   occasions.sort((a, b) => rowTotal(b) - rowTotal(a) || a.localeCompare(b));
 
   const colTotals = Object.fromEntries(STATUSES.map((k) => [k, 0]));
   let grand = 0;
-  let maxCell = 1;
   let maxRow = 1;
-  for (const occ of occasions) {
-    maxRow = Math.max(maxRow, rowTotal(occ));
-    for (const k of STATUSES) maxCell = Math.max(maxCell, byOcc[occ][k] || 0);
-  }
+  for (const occ of occasions) maxRow = Math.max(maxRow, rowTotal(occ));
 
   const head =
     `<thead><tr><th class="pivot-occ-h">Occasion</th>` +
@@ -237,11 +240,18 @@ function renderPivot(rows) {
       const rt = rowTotal(occ);
       grand += rt;
       const cells = STATUSES.map((k) => {
-        const n = byOcc[occ][k] || 0;
-        colTotals[k] += n;
-        if (!n) return `<td class="zero">·</td>`;
-        const alpha = (0.16 + 0.5 * (n / maxCell)).toFixed(3);
-        return `<td class="hot" style="background:${hexA(STATUS_COLOR[k], alpha)};color:${STATUS_COLOR[k]}">${n}</td>`;
+        const list = cell(occ, k);
+        colTotals[k] += list.length;
+        const label = STATUS_LABEL[k];
+        if (!list.length) return `<td class="pivot-cell empty" data-label="${label}"><span class="zero">·</span></td>`;
+        const chips = list
+          .map(
+            (b) =>
+              `<button type="button" class="pivot-name" data-id="${b.id}" title="${esc(b.name)}"
+                style="background:${hexA(STATUS_COLOR[k], 0.14)};color:${STATUS_COLOR[k]}">${esc(b.name)}</button>`
+          )
+          .join('');
+        return `<td class="pivot-cell" data-label="${label}"><div class="pivot-names">${chips}</div></td>`;
       }).join('');
       const barW = ((rt / maxRow) * 100).toFixed(1);
       const active = state.occasion === occ ? ' active' : '';
@@ -525,6 +535,8 @@ function applyOccasion(next) {
 }
 
 document.getElementById('pivot').addEventListener('click', (e) => {
+  const nameBtn = e.target.closest('.pivot-name');
+  if (nameBtn) { openDrawer(Number(nameBtn.dataset.id)); return; }
   const row = e.target.closest('.pivot-row');
   if (!row) return;
   const occ = row.dataset.occasion;

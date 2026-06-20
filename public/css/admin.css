@@ -644,23 +644,35 @@ table.pivot { width: 100%; border-collapse: collapse; font-size: 14px; }
 }
 
 .pivot td {
-  padding: 0;
+  padding: 10px;
   text-align: center;
-  font-variant-numeric: tabular-nums;
+  vertical-align: top;
   color: var(--silver);
   border-bottom: 1px solid rgba(60, 60, 58, 0.55);
-  white-space: nowrap;
-  height: 52px;
 }
-.pivot td.hot {
+.pivot-cell { min-width: 132px; }
+.pivot-names { display: flex; flex-direction: column; gap: 6px; }
+.pivot-name {
+  font-family: var(--font-body);
+  font-size: 12px;
   font-weight: 600;
-  font-size: 15px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  text-align: left;
+  padding: 7px 11px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: filter 0.15s ease, transform 0.08s ease;
 }
-.pivot td.zero { color: var(--warm-grey); opacity: 0.35; font-size: 16px; }
+.pivot-name:hover { filter: brightness(1.4); }
+.pivot-name:active { transform: scale(0.97); }
+.pivot td .zero { color: var(--warm-grey); opacity: 0.3; font-size: 16px; }
 .pivot td.pivot-occ {
   text-align: left;
-  padding: 0 18px;
+  vertical-align: middle;
+  padding: 12px 18px;
   color: var(--platinum);
   font-family: var(--font-display);
   font-weight: 400;
@@ -774,3 +786,75 @@ table.pivot { width: 100%; border-collapse: collapse; font-size: 14px; }
 
 @media (max-width: 900px) { .analytics { grid-template-columns: 1fr 1fr; } .an-trend { grid-column: 1 / -1; } }
 @media (max-width: 600px) { .analytics { grid-template-columns: 1fr; } }
+
+/* ─── Pivot — mobile (occasion cards instead of a wide matrix) ─────────────── */
+@media (max-width: 720px) {
+  /* Toolbar: tabs span the row, the filter chip sits on its own line. */
+  .view-toggle { width: 100%; }
+  .view-toggle .vt { flex: 1; text-align: center; padding: 12px 8px; }
+  .active-occ { width: 100%; justify-content: space-between; }
+
+  .pivot-title { font-size: 18px; }
+  .pivot-wrap { overflow: visible; border: none; background: none; box-shadow: none; }
+  .pivot, .pivot tbody, .pivot tr, .pivot td { display: block; width: 100%; }
+  .pivot thead, .pivot tfoot { display: none; }
+
+  .pivot tbody tr.pivot-row {
+    background: linear-gradient(165deg, var(--charcoal), #1c1c1a);
+    border: 1px solid var(--slate);
+    border-radius: 6px;
+    margin-bottom: 14px;
+    padding: 4px 16px 16px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+  }
+  .pivot tbody tr.pivot-row.active { box-shadow: inset 3px 0 0 var(--signal-orange), 0 10px 26px rgba(0, 0, 0, 0.3); }
+
+  .pivot td.pivot-occ {
+    padding: 16px 0 12px;
+    font-size: 19px;
+    border-bottom: 1px solid var(--slate);
+  }
+  /* Only show status buckets that actually have clients. */
+  .pivot td.pivot-cell.empty { display: none; }
+  .pivot td.pivot-cell {
+    min-width: 0;
+    text-align: left;
+    padding: 12px 0 0;
+  }
+  .pivot td.pivot-cell::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--warm-grey);
+    margin-bottom: 8px;
+  }
+  .pivot-names { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .pivot-name { font-size: 13px; padding: 9px 13px; }
+
+  /* Row total becomes a labelled line at the foot of each card. */
+  .pivot td.pivot-total-col {
+    border-left: none;
+    border-top: 1px solid var(--slate);
+    margin-top: 14px;
+    padding: 13px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .pivot td.pivot-total-col::before {
+    content: 'Total';
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--warm-grey);
+  }
+  .pivot-total-bar { flex: 1; }
+  .pivot-hint { text-align: center; }
+}
