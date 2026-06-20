@@ -64,7 +64,9 @@
       <div class="view-toggle" id="view-toggle">
         <button class="vt active" data-view="table" type="button">▤ Table</button>
         <button class="vt" data-view="board" type="button">▦ Board</button>
+        <button class="vt" data-view="pivot" type="button">⊞ Pivot</button>
       </div>
+      <span class="active-occ" id="active-occ" hidden></span>
       <span class="meta" id="result-count"></span>
     </div>
 
@@ -91,6 +93,18 @@
 
     <!-- BOARD (KANBAN) VIEW -->
     <div class="board" id="board" hidden><!-- rendered by JS --></div>
+
+    <!-- PIVOT VIEW (occasion × status — click an occasion to filter) -->
+    <div class="view-pivot" id="view-pivot" hidden>
+      <div class="pivot-head">
+        <span class="pivot-title">Occasion <em>×</em> Status</span>
+        <button type="button" class="pivot-clear" id="pivot-clear" hidden>Clear occasion ✕</button>
+      </div>
+      <div class="pivot-wrap">
+        <table class="pivot" id="pivot"><!-- rendered by JS --></table>
+      </div>
+      <p class="pivot-hint">Tap an occasion to filter the bookings list.</p>
+    </div>
   </main>
 
   <!-- DETAIL DRAWER -->

@@ -113,11 +113,12 @@ export default {
       if (pathname === '/api/admin/bookings' && method === 'GET') {
         const status = url.searchParams.get('status') || undefined;
         const q = url.searchParams.get('q') || undefined;
+        const occasion = url.searchParams.get('occasion') || undefined;
         const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit'), 10) || 50, 1), 200);
-        const total = await db.countBookings(env, { status, q });
+        const total = await db.countBookings(env, { status, q, occasion });
         const pages = Math.max(1, Math.ceil(total / limit));
         const page = Math.min(Math.max(parseInt(url.searchParams.get('page'), 10) || 1, 1), pages);
-        const bookings = await db.listBookings(env, { status, q, limit, offset: (page - 1) * limit });
+        const bookings = await db.listBookings(env, { status, q, occasion, limit, offset: (page - 1) * limit });
         return json({ ok: true, bookings, total, page, pages, limit });
       }
 

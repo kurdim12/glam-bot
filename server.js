@@ -86,12 +86,12 @@ app.get('/api/admin/analytics', auth.requireAuth, (req, res) => {
 });
 
 app.get('/api/admin/bookings', auth.requireAuth, (req, res) => {
-  const { status, q } = req.query;
+  const { status, q, occasion } = req.query;
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
-  const total = db.countBookings({ status, q });
+  const total = db.countBookings({ status, q, occasion });
   const pages = Math.max(1, Math.ceil(total / limit));
   const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), pages);
-  const bookings = db.listBookings({ status, q, limit, offset: (page - 1) * limit });
+  const bookings = db.listBookings({ status, q, occasion, limit, offset: (page - 1) * limit });
   res.json({ ok: true, bookings, total, page, pages, limit });
 });
 

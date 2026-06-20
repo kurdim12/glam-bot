@@ -115,11 +115,15 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearErrors();
 
-  // Only Name, WhatsApp and Occasion are required.
+  // Required: Name, WhatsApp, Occasion, Email and Shoot Date.
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let bad = false;
   if (!nameInput.value.trim()) { showError('name', 'Please tell us your name.'); bad = true; }
   if (!phoneInput.value.trim()) { showError('phone', 'A phone or WhatsApp number is required.'); bad = true; }
   if (!occasionInput.value) { showError('occasion', 'Pick the type of shoot.'); bad = true; }
+  if (!emailInput.value.trim()) { showError('email', 'An email address is required.'); bad = true; }
+  else if (!EMAIL_RE.test(emailInput.value.trim())) { showError('email', 'That email does not look right.'); bad = true; }
+  if (!flexDate.checked && !dateField.value) { showError('shoot_date', 'Pick a date, or tick "flexible".'); bad = true; }
   if (bad) {
     toast('Please complete the highlighted fields.', 'error');
     const first = form.querySelector('.field.invalid');

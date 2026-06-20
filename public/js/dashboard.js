@@ -19,7 +19,7 @@ const STATUS_COLOR = {
 
 const PAGE_SIZE = 50;
 const state = {
-  status: '', q: '', bookings: [],
+  status: '', q: '', occasion: '', bookings: [],
   stats: { total: 0, byStatus: {} },
   openId: null,
   page: 1, pages: 1, total: 0,
@@ -78,6 +78,7 @@ async function loadBookings() {
   const params = new URLSearchParams();
   if (state.status) params.set('status', state.status);
   if (state.q) params.set('q', state.q);
+  if (state.occasion) params.set('occasion', state.occasion);
   params.set('page', state.page);
   params.set('limit', PAGE_SIZE);
   const res = await api('/api/admin/bookings?' + params.toString());
@@ -134,6 +135,11 @@ async function loadAnalytics() {
   renderTrend(data.daily || []);
   renderOccasion(data.byOccasion || []);
   renderPipeline();
+  // The pivot lists real client names, so it needs the rows themselves —
+  // not just the aggregate counts the analytics endpoint returns.
+  const pres = await api('/api/admin/bookings?limit=200');
+  const pdata = await pres.json();
+  renderPivot(pdata.bookings || []);
 }
 
 function renderTrend(daily) {
@@ -180,6 +186,94 @@ function renderOccasion(list) {
   requestAnimationFrame(() => el.querySelectorAll('.an-bar-fill').forEach((f) => { f.style.width = f.dataset.w; }));
 }
 
+/** "#rrggbb" + alpha -> "rgba(...)" so cells can tint with the status color. */
+function hexA(hex, a) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
+/**
+ * Pivot: occasions down the side, the status pipeline across the top. Each cell
+ * lists the actual clients in that occasion/status bucket as chips (tap a name
+ * to open its detail drawer). Tap an occasion to filter the bookings list/board.
+ */
+function renderPivot(bookings) {
+  const table = document.getElementById('pivot');
+  const clearBtn = document.getElementById('pivot-clear');
+
+  // occasion -> status -> [booking]
+  const byOcc = {};
+  for (const b of bookings) {
+    const occ = b.occasion && b.occasion.trim() ? b.occasion.trim() : 'Other';
+    const cols = byOcc[occ] || (byOcc[occ] = {});
+    (cols[b.status] || (cols[b.status] = [])).push(b);
+    state.boardCache[b.id] = b; // so tapping a name opens the drawer instantly
+  }
+  const occasions = Object.keys(byOcc);
+
+  if (!occasions.length) {
+    table.innerHTML = `<tbody><tr><td class="pivot-empty">No inquiries yet.</td></tr></tbody>`;
+    clearBtn.hidden = true;
+    return;
+  }
+
+  const cell = (occ, k) => byOcc[occ][k] || [];
+  const rowTotal = (occ) => STATUSES.reduce((s, k) => s + cell(occ, k).length, 0);
+  occasions.sort((a, b) => rowTotal(b) - rowTotal(a) || a.localeCompare(b));
+
+  const colTotals = Object.fromEntries(STATUSES.map((k) => [k, 0]));
+  let grand = 0;
+  let maxRow = 1;
+  for (const occ of occasions) maxRow = Math.max(maxRow, rowTotal(occ));
+
+  const head =
+    `<thead><tr><th class="pivot-occ-h">Occasion</th>` +
+    STATUSES.map(
+      (k) => `<th><i class="pivot-dot" style="background:${STATUS_COLOR[k]}"></i>${STATUS_LABEL[k]}</th>`
+    ).join('') +
+    `<th class="pivot-total-col">Total</th></tr></thead>`;
+
+  const body = occasions
+    .map((occ) => {
+      const rt = rowTotal(occ);
+      grand += rt;
+      const cells = STATUSES.map((k) => {
+        const list = cell(occ, k);
+        colTotals[k] += list.length;
+        const label = STATUS_LABEL[k];
+        if (!list.length) return `<td class="pivot-cell empty" data-label="${label}"><span class="zero">·</span></td>`;
+        const chips = list
+          .map(
+            (b) =>
+              `<button type="button" class="pivot-name" data-id="${b.id}" title="${esc(b.name)}"
+                style="background:${hexA(STATUS_COLOR[k], 0.14)};color:${STATUS_COLOR[k]}">${esc(b.name)}</button>`
+          )
+          .join('');
+        return `<td class="pivot-cell" data-label="${label}"><div class="pivot-names">${chips}</div></td>`;
+      }).join('');
+      const barW = ((rt / maxRow) * 100).toFixed(1);
+      const active = state.occasion === occ ? ' active' : '';
+      return `<tr class="pivot-row${active}" data-occasion="${esc(occ)}">
+        <td class="pivot-occ">${esc(occ)}</td>${cells}
+        <td class="pivot-total-col">
+          <span class="pivot-total-n">${rt}</span>
+          <span class="pivot-total-bar"><i style="width:${barW}%"></i></span>
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  const foot =
+    `<tfoot><tr><td class="pivot-occ">All occasions</td>` +
+    STATUSES.map((k) => `<td>${colTotals[k]}</td>`).join('') +
+    `<td class="pivot-total-col">${grand}</td></tr></tfoot>`;
+
+  table.innerHTML = head + `<tbody>${body}</tbody>` + foot;
+  clearBtn.hidden = !state.occasion;
+}
+
 function renderPipeline() {
   const by = state.stats.byStatus || {};
   const total = STATUSES.reduce((s, k) => s + (by[k] || 0), 0);
@@ -201,12 +295,13 @@ function renderTable() {
   const stateEl = document.getElementById('state');
   const count = document.getElementById('result-count');
 
-  count.textContent = `[ ${state.total.toLocaleString()} ${state.status || state.q ? 'MATCHED' : 'TOTAL'} ]`;
+  const filtered = state.status || state.q || state.occasion;
+  count.textContent = `[ ${state.total.toLocaleString()} ${filtered ? 'MATCHED' : 'TOTAL'} ]`;
 
   if (!state.bookings.length) {
     tbody.innerHTML = '';
     stateEl.style.display = 'block';
-    stateEl.textContent = state.q || state.status
+    stateEl.textContent = filtered
       ? 'No bookings match this filter.'
       : 'No inquiries yet. They will appear here the moment one comes in.';
     return;
@@ -373,9 +468,10 @@ function boardCard(b) {
 async function loadBoard() {
   const board = document.getElementById('board');
   if (!board.children.length) board.innerHTML = '<div class="bcol-empty">Loading…</div>';
+  const occParam = state.occasion ? `&occasion=${encodeURIComponent(state.occasion)}` : '';
   const results = await Promise.all(
     STATUSES.map((s) =>
-      api(`/api/admin/bookings?status=${s}&limit=50`)
+      api(`/api/admin/bookings?status=${s}&limit=50${occParam}`)
         .then((r) => r.json())
         .then((d) => ({ s, items: d.bookings || [], total: d.total || 0 }))
     )
@@ -397,10 +493,12 @@ function showView(v) {
   state.view = v;
   document.getElementById('view-table').hidden = v !== 'table';
   document.getElementById('board').hidden = v !== 'board';
+  document.getElementById('view-pivot').hidden = v !== 'pivot';
   document.querySelectorAll('.vt').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   document.getElementById('search').style.display = v === 'table' ? '' : 'none';
   document.getElementById('result-count').style.display = v === 'table' ? '' : 'none';
   if (v === 'board') loadBoard();
+  if (v === 'pivot') loadAnalytics();
 }
 
 /* ── Events ─────────────────────────────────────────────────────────────── */
@@ -410,6 +508,47 @@ document.getElementById('stats').addEventListener('click', (e) => {
   state.status = card.dataset.status;
   renderStats();
   applyFilter();
+});
+
+/* A removable chip in the toolbar shows the active occasion filter in any view. */
+function updateOccChip() {
+  const chip = document.getElementById('active-occ');
+  if (state.occasion) {
+    chip.hidden = false;
+    chip.innerHTML = `<span>Occasion · <b>${esc(state.occasion)}</b></span><button class="occ-x" type="button" aria-label="Clear occasion filter">✕</button>`;
+  } else {
+    chip.hidden = true;
+    chip.innerHTML = '';
+  }
+}
+
+/* Pivot: select an occasion to filter the list (select again to clear). */
+function applyOccasion(next) {
+  state.occasion = next;
+  document.getElementById('pivot').querySelectorAll('.pivot-row').forEach((r) =>
+    r.classList.toggle('active', !!next && r.dataset.occasion === next)
+  );
+  document.getElementById('pivot-clear').hidden = !next;
+  updateOccChip();
+  applyFilter();
+  if (state.view === 'board') loadBoard();
+}
+
+document.getElementById('pivot').addEventListener('click', (e) => {
+  const nameBtn = e.target.closest('.pivot-name');
+  if (nameBtn) { openDrawer(Number(nameBtn.dataset.id)); return; }
+  const row = e.target.closest('.pivot-row');
+  if (!row) return;
+  const occ = row.dataset.occasion;
+  const next = state.occasion === occ ? '' : occ;
+  applyOccasion(next);
+  // Drill straight into the filtered list so the result is visible.
+  if (next) showView('table');
+});
+
+document.getElementById('pivot-clear').addEventListener('click', () => applyOccasion(''));
+document.getElementById('active-occ').addEventListener('click', (e) => {
+  if (e.target.closest('.occ-x')) applyOccasion('');
 });
 
 document.getElementById('pager').addEventListener('click', (e) => {
