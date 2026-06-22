@@ -609,7 +609,7 @@ img, svg { max-width: 100%; }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   CINEMATIC HERO  —  light rays · dust · robotic arm · cursor spotlight ·
+   CINEMATIC HERO  —  light rays · dust · cursor spotlight ·
    metallic sheen · boot-up aperture
    ════════════════════════════════════════════════════════════════════════════ */
 @property --iris { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
@@ -636,16 +636,6 @@ img, svg { max-width: 100%; }
 /* Floating dust motes (canvas). */
 .hero-particles { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.7; }
 
-/* Robotic camera arm — a slow craning motif on the right. */
-.hero-arm {
-  position: absolute;
-  right: -2%; bottom: -4%;
-  height: 108%; width: auto;
-  color: var(--silver);
-  opacity: 0.16;
-  filter: drop-shadow(0 0 30px rgba(255, 92, 0, 0.12));
-}
-
 /* Soft light that tracks the cursor. */
 .hero-spot {
   position: absolute; inset: 0;
@@ -668,8 +658,6 @@ img, svg { max-width: 100%; }
   }
 }
 @keyframes sheen { 0%, 100% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
-
-@media (max-width: 720px) { .hero-arm { display: none; } }
 
 /* ── Boot-up aperture overlay ───────────────────────────────────────────────── */
 body.booting { overflow: hidden; }
