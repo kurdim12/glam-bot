@@ -1,15 +1,5 @@
 'use strict';
 
-// Live timecode in the hero — a small touch of camera-UI realism.
-(function tick() {
-  const el = document.getElementById('timecode');
-  if (!el) return;
-  const now = new Date();
-  const p = (n) => String(n).padStart(2, '0');
-  el.textContent = `[ ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())} ]`;
-  setTimeout(tick, 1000);
-})();
-
 const form = document.getElementById('inquiry-form');
 const btn = document.getElementById('submit-btn');
 
