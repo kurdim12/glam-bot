@@ -22,6 +22,8 @@ export async function ensureSchema(env) {
     ),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at)'),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_status_created ON bookings(status, created_at)'),
+    // Serves the date-clash lookups (and same-date drawer context).
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_shoot_date ON bookings(shoot_date)'),
   ]);
 
   // Agent-layer columns, added after the fact — ALTER TABLE has no IF NOT
@@ -124,18 +126,31 @@ export async function deleteBooking(env, id) {
   return res.meta.changes > 0;
 }
 
-// The booking form stores shoot_date as either an ISO date or "Flexible";
-// only real dates can clash (all the Flexibles would otherwise "collide").
-const ISO_DATE_GLOB = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
-
-/** Shoot dates shared by 2+ active bookings — the machine can't be in two places. */
-export async function dateClashSet(env) {
-  const res = await env.DB.prepare(
-    `SELECT shoot_date FROM bookings
-     WHERE status != 'cancelled' AND shoot_date GLOB '${ISO_DATE_GLOB}'
-     GROUP BY shoot_date HAVING COUNT(*) > 1`
-  ).all();
-  return new Set((res.results || []).map((r) => r.shoot_date));
+/**
+ * Which of these shoot dates are shared by 2+ active bookings — the machine
+ * can't be in two places. Bounded to the caller's candidate dates (a page of
+ * rows, or one booking) so the hot list endpoint stays index-backed instead
+ * of scanning the whole table on every call. The booking form stores
+ * shoot_date as either an ISO date or "Flexible"; only real dates can clash
+ * (all the Flexibles would otherwise "collide"), so non-ISO values are
+ * dropped before they ever reach SQL.
+ */
+export async function dateClashSet(env, dates) {
+  const unique = [...new Set((dates || []).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d || '')))];
+  const out = new Set();
+  // D1 caps bound parameters per statement — chunk large date lists.
+  for (let i = 0; i < unique.length; i += 90) {
+    const chunk = unique.slice(i, i + 90);
+    const res = await env.DB.prepare(
+      `SELECT shoot_date FROM bookings
+       WHERE status != 'cancelled' AND shoot_date IN (${chunk.map(() => '?').join(',')})
+       GROUP BY shoot_date HAVING COUNT(*) > 1`
+    )
+      .bind(...chunk)
+      .all();
+    for (const r of res.results || []) out.add(r.shoot_date);
+  }
+  return out;
 }
 
 /** Other bookings by the same client (matched on email or phone). */
