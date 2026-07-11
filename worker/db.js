@@ -38,7 +38,13 @@ export async function ensureSchema(env) {
   ];
   for (const [name, type] of wanted) {
     if (!have.has(name)) {
-      await env.DB.prepare(`ALTER TABLE bookings ADD COLUMN ${name} ${type}`).run();
+      try {
+        await env.DB.prepare(`ALTER TABLE bookings ADD COLUMN ${name} ${type}`).run();
+      } catch (err) {
+        // Two fresh isolates can race the PRAGMA check; the loser's ALTER
+        // hits "duplicate column name". The column exists — that's success.
+        if (!/duplicate column/i.test(String(err) + String(err?.cause || ''))) throw err;
+      }
     }
   }
 

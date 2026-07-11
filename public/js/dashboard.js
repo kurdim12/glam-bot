@@ -430,17 +430,21 @@ async function openDrawer(id) {
 
 /* ── WhatsApp draft agent (drafts only — the owner sends) ───────────────── */
 async function requestDraft(id) {
-  const btn = document.getElementById('draft-btn');
-  const panel = document.getElementById('draft-panel');
-  const errEl = document.getElementById('draft-err');
-  btn.disabled = true;
-  btn.textContent = 'Drafting…';
-  errEl.hidden = true;
+  document.getElementById('draft-btn').disabled = true;
+  document.getElementById('draft-btn').textContent = 'Drafting…';
+  document.getElementById('draft-err').hidden = true;
 
   try {
     const res = await api(`/api/admin/bookings/${id}/draft`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok || typeof data.message !== 'string') throw new Error('draft-failed');
+    // The drawer may have moved to another booking while we waited — never
+    // wire this response's message/number into someone else's panel. (All
+    // elements are re-resolved below because reopening the drawer re-renders
+    // them; references captured before the await would be detached.)
+    if (state.openId !== id) return;
+    if (!res.ok || !data.ok || typeof data.message !== 'string') {
+      throw new Error(res.status === 404 ? 'draft-unsupported' : 'draft-failed');
+    }
 
     const ta = document.getElementById('draft-text');
     ta.value = data.message; // .value assignment — never innerHTML
@@ -466,15 +470,18 @@ async function requestDraft(id) {
       }
     };
 
-    panel.hidden = false;
-    btn.textContent = '↻ Redraft';
+    document.getElementById('draft-panel').hidden = false;
+    document.getElementById('draft-btn').textContent = '↻ Redraft';
   } catch (err) {
-    if (err.message === 'unauthorized') return;
-    errEl.textContent = 'Draft failed — tap to retry.';
+    if (err.message === 'unauthorized' || state.openId !== id) return;
+    const errEl = document.getElementById('draft-err');
+    errEl.textContent = err.message === 'draft-unsupported'
+      ? 'Drafting is only available on the Cloudflare deployment.'
+      : 'Draft failed — try again.';
     errEl.hidden = false;
-    btn.textContent = '↻ Retry draft';
+    document.getElementById('draft-btn').textContent = '↻ Retry draft';
   } finally {
-    btn.disabled = false;
+    if (state.openId === id) document.getElementById('draft-btn').disabled = false;
   }
 }
 
