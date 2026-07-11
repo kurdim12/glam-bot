@@ -21,7 +21,8 @@ export function normalizePhoneJO(raw) {
   else if (/^07\d{8}$/.test(s)) s = '+962' + s.slice(1); // 079... → +96279...
   // already "+..." → keep as-is
 
-  if (!/^\+\d{8,15}$/.test(s)) return null;
+  // E.164 never starts with 0 — this also rejects raw "+00…" inputs.
+  if (!/^\+[1-9]\d{7,14}$/.test(s)) return null;
   // Jordanian mobiles must be +9627[789]XXXXXXX; other countries pass as-is.
   if (s.startsWith('+962') && !/^\+9627[789]\d{7}$/.test(s)) return null;
   return s;

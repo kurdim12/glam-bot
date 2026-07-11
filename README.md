@@ -6,8 +6,10 @@ look, backed by a simple password-protected admin dashboard to manage every
 inquiry that comes in.
 
 Deploys two ways from one codebase: as a **Node + SQLite** app on any Node host,
-or fully serverless on **Cloudflare** (Workers + D1). No third-party services or
-API keys either way.
+or fully serverless on **Cloudflare** (Workers + D1). The core booking + admin
+system needs no third-party services or API keys; the optional agent layer
+(Cloudflare only) adds AI call briefs, WhatsApp draft generation, and a daily
+Telegram digest behind three secrets — and degrades gracefully without them.
 
 ---
 
