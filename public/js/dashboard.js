@@ -49,6 +49,14 @@ function fmtDateTime(iso) {
     ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
+/** Urgency + language chips (whitelisted values only — nothing else renders). */
+function badgeHtml(b) {
+  let h = '';
+  if (b.urgency === 'hot' || b.urgency === 'warm') h += `<span class="badge ${b.urgency}">${b.urgency}</span>`;
+  if (b.lang === 'ar' || b.lang === 'en') h += `<span class="badge lang">${b.lang.toUpperCase()}</span>`;
+  return h;
+}
+
 /** fetch wrapper that bounces to login on session expiry. */
 async function api(path, opts) {
   const res = await fetch(path, opts);
@@ -312,7 +320,7 @@ function renderTable() {
     .map(
       (b) => `
       <tr data-id="${b.id}">
-        <td class="name" data-label="Client">${esc(b.name)}<span class="sub">${esc(b.email)}</span></td>
+        <td class="name" data-label="Client">${esc(b.name)}${badgeHtml(b)}<span class="sub">${esc(b.email)}</span></td>
         <td class="hide-sm" data-label="Occasion">${esc(b.occasion) || '<span class="muted">—</span>'}</td>
         <td class="hide-sm" data-label="Shoot date">${fmtDate(b.shoot_date)}</td>
         <td class="hide-sm" data-label="Location">${esc(b.location) || '<span class="muted">—</span>'}</td>
@@ -361,13 +369,20 @@ async function openDrawer(id) {
 
   document.getElementById('d-name').textContent = b.name;
 
-  const waNumber = String(b.phone || '').replace(/[^\d]/g, '');
+  // Prefer the normalized number (enrichment) for tel:/wa.me; fall back to
+  // the raw phone field for old or not-yet-enriched rows.
+  const waNumber = String(b.phone_e164 || b.phone || '').replace(/[^\d]/g, '');
+  const phoneHtml = b.phone_e164
+    ? `<a href="tel:${esc(b.phone_e164)}">${esc(b.phone_e164)}</a>
+       <span class="muted">·</span>
+       <a href="https://wa.me/${esc(waNumber)}" target="_blank" rel="noopener">WhatsApp</a>`
+    : waNumber
+      ? `<a href="https://wa.me/${esc(waNumber)}" target="_blank" rel="noopener">${esc(b.phone)}</a>`
+      : esc(b.phone) || '—';
   const body = [
     detailRow('Email', `<a href="mailto:${esc(b.email)}">${esc(b.email)}</a>`),
-    detailRow(
-      'Phone / WhatsApp',
-      `<a href="https://wa.me/${esc(waNumber)}" target="_blank" rel="noopener">${esc(b.phone)}</a>`
-    ),
+    detailRow('Phone / WhatsApp', phoneHtml),
+    b.ai_brief ? detailRow('AI Call Brief', `<div class="ai-brief">${esc(b.ai_brief)}</div>`) : '',
     detailRow('Occasion', esc(b.occasion) || '—'),
     detailRow('Shoot Date', fmtDate(b.shoot_date)),
     detailRow('Location', esc(b.location) || '—'),
@@ -385,6 +400,19 @@ async function openDrawer(id) {
       'Internal Notes',
       `<textarea class="notes-input drawer-control" id="d-notes" placeholder="Notes for your team...">${esc(b.admin_notes)}</textarea>`
     ),
+    detailRow(
+      'WhatsApp Follow-up',
+      `<button type="button" class="btn" id="draft-btn">✦ Draft WhatsApp</button>
+      <div class="draft-panel" id="draft-panel" hidden>
+        <textarea class="notes-input" id="draft-text" rows="5" aria-label="Draft message"></textarea>
+        <div class="draft-actions">
+          <button type="button" class="btn btn-solid" id="draft-open">Open WhatsApp</button>
+          <button type="button" class="btn" id="draft-copy">Copy</button>
+        </div>
+        <p class="draft-hint">Review and edit before sending — nothing is sent automatically.</p>
+      </div>
+      <div class="draft-err" id="draft-err" hidden></div>`
+    ),
   ].join('');
 
   document.getElementById('drawer-body').innerHTML = body;
@@ -397,6 +425,57 @@ async function openDrawer(id) {
 
   document.getElementById('d-status').addEventListener('change', saveOpen);
   document.getElementById('d-notes').addEventListener('blur', saveOpen);
+  document.getElementById('draft-btn').addEventListener('click', () => requestDraft(id));
+}
+
+/* ── WhatsApp draft agent (drafts only — the owner sends) ───────────────── */
+async function requestDraft(id) {
+  const btn = document.getElementById('draft-btn');
+  const panel = document.getElementById('draft-panel');
+  const errEl = document.getElementById('draft-err');
+  btn.disabled = true;
+  btn.textContent = 'Drafting…';
+  errEl.hidden = true;
+
+  try {
+    const res = await api(`/api/admin/bookings/${id}/draft`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || typeof data.message !== 'string') throw new Error('draft-failed');
+
+    const ta = document.getElementById('draft-text');
+    ta.value = data.message; // .value assignment — never innerHTML
+
+    // Rebuild the wa.me link client-side at click time so the admin's edits
+    // are respected (the server's wa_url only tells us the number exists).
+    let digits = '';
+    if (data.wa_url) {
+      try { digits = new URL(data.wa_url).pathname.replace(/[^\d]/g, ''); } catch { /* copy-only */ }
+    }
+    const openBtn = document.getElementById('draft-open');
+    openBtn.hidden = !digits; // no normalized phone → copy-only
+    openBtn.onclick = () => {
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(ta.value)}`, '_blank', 'noopener');
+    };
+    document.getElementById('draft-copy').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(ta.value);
+        toast('Draft copied.', 'success');
+      } catch {
+        ta.select();
+        toast('Could not copy — text selected, press Ctrl/Cmd+C.', 'error');
+      }
+    };
+
+    panel.hidden = false;
+    btn.textContent = '↻ Redraft';
+  } catch (err) {
+    if (err.message === 'unauthorized') return;
+    errEl.textContent = 'Draft failed — tap to retry.';
+    errEl.hidden = false;
+    btn.textContent = '↻ Retry draft';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function closeDrawer() {
@@ -459,7 +538,7 @@ async function deleteOpen() {
 /* ── Kanban board view ──────────────────────────────────────────────────────── */
 function boardCard(b) {
   return `<div class="bcard" draggable="true" data-id="${b.id}" style="border-left-color:${STATUS_COLOR[b.status]}">
-    <div class="bcard-name">${esc(b.name)}</div>
+    <div class="bcard-name">${esc(b.name)}${badgeHtml(b)}</div>
     <div class="bcard-meta">${esc(b.occasion) || '—'} · ${fmtDate(b.shoot_date)}</div>
     <div class="bcard-foot"><span>${esc(b.location) || ''}</span><span>${fmtDateTime(b.created_at)}</span></div>
   </div>`;

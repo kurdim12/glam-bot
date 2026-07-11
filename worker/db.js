@@ -23,6 +23,25 @@ export async function ensureSchema(env) {
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings(created_at)'),
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_bookings_status_created ON bookings(status, created_at)'),
   ]);
+
+  // Agent-layer columns, added after the fact — ALTER TABLE has no IF NOT
+  // EXISTS in SQLite, so diff against PRAGMA table_info instead. All nullable,
+  // no defaults: pre-existing rows stay valid, un-enriched rows read as NULL.
+  const info = await env.DB.prepare('PRAGMA table_info(bookings)').all();
+  const have = new Set((info.results || []).map((c) => c.name));
+  const wanted = [
+    ['phone_e164', 'TEXT'], // normalized phone (+962...), NULL if unparseable
+    ['lang', 'TEXT'], // 'ar' | 'en'
+    ['urgency', 'TEXT'], // 'hot' | 'warm' | 'normal'
+    ['ai_brief', 'TEXT'], // 2-line LLM call brief
+    ['enriched_at', 'TEXT'], // ISO timestamp of successful LLM enrichment
+  ];
+  for (const [name, type] of wanted) {
+    if (!have.has(name)) {
+      await env.DB.prepare(`ALTER TABLE bookings ADD COLUMN ${name} ${type}`).run();
+    }
+  }
+
   schemaReady = true;
 }
 

@@ -27,8 +27,16 @@
     }
   ],
 
+  // Daily stale-lead digest → Telegram. 05:00 UTC = 08:00 Amman (Jordan is
+  // UTC+3 year-round, no DST).
+  "triggers": {
+    "crons": ["0 5 * * *"]
+  },
+
   // Non-secret config. ADMIN_PASSWORD and SESSION_SECRET are secrets — set them
   // with `wrangler secret put ...` (production) or in .dev.vars (local dev).
+  // The agent layer adds three more secrets: OPENROUTER_API_KEY (call briefs +
+  // WhatsApp drafts), TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID (daily digest).
   "vars": {
     "SESSION_TTL_HOURS": "12"
   },

@@ -5,3 +5,11 @@
 ADMIN_PASSWORD=glambot
 SESSION_SECRET=change-me-to-a-long-random-string
 SESSION_TTL_HOURS=12
+
+# Agent layer (all optional — everything degrades gracefully without them).
+# OPENROUTER_API_KEY   → call briefs on new bookings + WhatsApp drafts
+# TELEGRAM_BOT_TOKEN   → daily stale-lead digest (via @BotFather)
+# TELEGRAM_CHAT_ID     → who receives the digest (see README)
+OPENROUTER_API_KEY=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=

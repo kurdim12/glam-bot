@@ -11,6 +11,9 @@
 import * as db from './db.js';
 import * as auth from './auth.js';
 import { validateBooking } from './validate.js';
+import { enrichBooking } from './enrich.js';
+import { generateDraft } from './draft.js';
+import { runDigest } from './digest.js';
 
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), {
@@ -56,7 +59,7 @@ async function buildCsv(env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const { pathname, origin } = url;
     const method = request.method;
@@ -73,6 +76,10 @@ export default {
       try {
         await db.ensureSchema(env);
         const id = await db.createBooking(env, result.value);
+        // Enrichment (phone/lang/urgency + LLM call brief) runs after this
+        // response is sent — the visitor never waits on, or fails because
+        // of, an AI call. enrichBooking never rejects.
+        ctx.waitUntil(enrichBooking(env, id));
         return json({ ok: true, id }, 201);
       } catch (err) {
         console.error('Failed to save booking:', err);
@@ -131,6 +138,21 @@ export default {
         });
       }
 
+      // Draft a WhatsApp follow-up (agents draft, humans send — the admin
+      // reviews/edits in the dashboard and sends via wa.me themselves).
+      const dm = pathname.match(/^\/api\/admin\/bookings\/(\d+)\/draft$/);
+      if (dm && method === 'POST') {
+        const booking = await db.getBooking(env, Number(dm[1]));
+        if (!booking) return json({ ok: false, error: 'Not found.' }, 404);
+        try {
+          const { message, wa_url } = await generateDraft(env, booking);
+          return json({ ok: true, message, wa_url });
+        } catch (err) {
+          console.error(`Draft failed for booking ${booking.id}:`, err);
+          return json({ ok: false, error: 'Draft failed, try again.' }, 502);
+        }
+      }
+
       const m = pathname.match(/^\/api\/admin\/bookings\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
@@ -171,5 +193,10 @@ export default {
     // Any other /api/* or /admin* that reached the Worker is a 404 / asset.
     if (pathname.startsWith('/api/')) return json({ ok: false, error: 'Not found.' }, 404);
     return env.ASSETS.fetch(request);
+  },
+
+  // Daily stale-lead digest (05:00 UTC = 08:00 Amman, see wrangler.jsonc).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runDigest(env));
   },
 };

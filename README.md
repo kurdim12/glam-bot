@@ -24,6 +24,13 @@ API keys either way.
   - a detail drawer to read the full brief, click-to-WhatsApp / email the
     client, move a booking through its status pipeline, and jot internal notes,
   - delete, and a one-click **CSV export** of all bookings.
+- **Agent layer** (Cloudflare Worker only — see
+  [The agent layer](#the-agent-layer-cloudflare-only)):
+  - every new booking is enriched in the background: normalized phone,
+    language (AR/EN), urgency score, and a 2-line AI call brief,
+  - a per-booking **"Draft WhatsApp"** button generates a follow-up message in
+    the lead's language — the owner reviews, edits, and sends it personally,
+  - a daily **8:00 AM (Amman) Telegram digest** of new + stale leads.
 
 ## Tech — runs two ways
 
@@ -88,17 +95,18 @@ cp .env.example .env
 
 ## API (used by the front-end)
 
-| Method   | Route                        | Auth  | Purpose                       |
-| -------- | ---------------------------- | ----- | ----------------------------- |
-| `POST`   | `/api/bookings`              | —     | Submit an inquiry             |
-| `POST`   | `/api/admin/login`           | —     | Start an admin session        |
-| `POST`   | `/api/admin/logout`          | —     | End the session               |
-| `GET`    | `/api/admin/stats`           | admin | Counts by status              |
-| `GET`    | `/api/admin/bookings`        | admin | List (`?status=`, `?q=`)      |
-| `GET`    | `/api/admin/bookings/:id`    | admin | One booking                   |
-| `PATCH`  | `/api/admin/bookings/:id`    | admin | Update status / internal notes|
-| `DELETE` | `/api/admin/bookings/:id`    | admin | Delete                        |
-| `GET`    | `/api/admin/export.csv`      | admin | Download all bookings as CSV  |
+| Method   | Route                           | Auth  | Purpose                       |
+| -------- | ------------------------------- | ----- | ----------------------------- |
+| `POST`   | `/api/bookings`                 | —     | Submit an inquiry             |
+| `POST`   | `/api/admin/login`              | —     | Start an admin session        |
+| `POST`   | `/api/admin/logout`             | —     | End the session               |
+| `GET`    | `/api/admin/stats`              | admin | Counts by status              |
+| `GET`    | `/api/admin/bookings`           | admin | List (`?status=`, `?q=`)      |
+| `GET`    | `/api/admin/bookings/:id`       | admin | One booking                   |
+| `PATCH`  | `/api/admin/bookings/:id`       | admin | Update status / internal notes|
+| `DELETE` | `/api/admin/bookings/:id`       | admin | Delete                        |
+| `POST`   | `/api/admin/bookings/:id/draft` | admin | AI WhatsApp draft (Worker only) |
+| `GET`    | `/api/admin/export.csv`         | admin | Download all bookings as CSV  |
 
 ## Scale & performance
 
@@ -163,6 +171,19 @@ npx wrangler secret put ADMIN_PASSWORD
 npx wrangler secret put SESSION_SECRET     # a long random string
 ```
 
+> ⚠ Both are **required in production** — the code falls back to the dev
+> password `glambot` when `ADMIN_PASSWORD` is unset. Verify with
+> `npx wrangler secret list`.
+
+The agent layer needs three more (all optional — every feature degrades
+gracefully when its secret is missing):
+
+```bash
+npx wrangler secret put OPENROUTER_API_KEY   # call briefs + WhatsApp drafts
+npx wrangler secret put TELEGRAM_BOT_TOKEN   # daily digest
+npx wrangler secret put TELEGRAM_CHAT_ID     # daily digest recipient
+```
+
 **4. Deploy:**
 
 ```bash
@@ -180,6 +201,65 @@ npm run cf:dev                        # → http://localhost:8787
 The session cookie is automatically marked `Secure` on HTTPS (production) and
 left off on local `http://localhost`, so login works in both.
 
+## The agent layer (Cloudflare only)
+
+Three small agents run inside the Worker. Two hard rules govern all of them:
+
+1. **The public booking path never waits on, or fails because of, an AI
+   call.** Enrichment runs *after* the visitor's `201` via `ctx.waitUntil()`,
+   and every LLM failure degrades silently to "no brief" — never to a failed
+   booking.
+2. **Agents draft, humans send.** No message reaches a customer unless the
+   owner presses send in WhatsApp themselves. There is no WhatsApp API, no
+   auto-reply, no auto-email.
+
+### Intake enrichment (background, per new booking)
+
+On every new inquiry the Worker writes deterministic fields first — normalized
+phone (`phone_e164`, e.g. `+962790123456`), language (`lang`: `ar`/`en`, from
+Arabic script detection), and urgency (`hot` ≤ 7 days out / `warm` ≤ 30 /
+`normal`) — then makes one LLM call (OpenRouter, Gemini Flash Lite with a
+fallback model) for a 2-line call brief (`ai_brief`). If the LLM is down or
+`OPENROUTER_API_KEY` is unset, the booking still gets the deterministic
+fields; the brief just stays empty. The dashboard shows urgency/language
+badges, the brief, and `tel:`/`wa.me` links off the normalized number.
+
+### WhatsApp draft button (dashboard)
+
+Each booking's drawer has **✦ Draft WhatsApp**: one LLM call writes a
+follow-up in the lead's language (spoken Jordanian Arabic for `ar` leads, not
+formal فصحى). The message lands in an editable textarea; **Open WhatsApp**
+opens `wa.me` with the *edited* text prefilled, **Copy** copies it. Drafts are
+never stored and never sent automatically.
+
+### Daily stale-lead digest (Telegram, no LLM)
+
+A cron trigger (05:00 UTC = **8:00 AM Amman**) sends the owner one Telegram
+message: new leads in the last 24 h, leads sitting in `new` for over 20 h
+(named, up to 3), and the total `new` count. A completely quiet day sends
+nothing.
+
+**Telegram setup:** create a bot with [@BotFather](https://t.me/BotFather) →
+that's `TELEGRAM_BOT_TOKEN`. Send your bot any message, then open
+`https://api.telegram.org/bot<token>/getUpdates` and read `chat.id` from the
+response → that's `TELEGRAM_CHAT_ID`.
+
+Test the cron locally:
+
+```bash
+npx wrangler dev --test-scheduled
+curl "http://localhost:8787/__scheduled?cron=0+5+*+*+*"
+```
+
+### Schema note
+
+The five agent columns (`phone_e164`, `lang`, `urgency`, `ai_brief`,
+`enriched_at`) are added by the Worker itself on first use — `ensureSchema`
+diffs `PRAGMA table_info(bookings)` and `ALTER TABLE`s what's missing, so
+there is **no migration to run** and existing rows stay valid. (They are
+intentionally not in `migrations/`; the Node/Express backend doesn't use
+them.)
+
 ## Project layout
 
 ```
@@ -191,10 +271,14 @@ glam-bot/
 │   ├── validate.js        # booking input validation
 │   └── env.js             # tiny .env loader
 ├── worker/                # Cloudflare Worker backend (ESM)
-│   ├── index.js           # router: API + gated admin pages
+│   ├── index.js           # router: API + gated admin pages + cron handler
 │   ├── db.js              # D1 queries (same SQL as src/db.js)
 │   ├── auth.js            # signed-cookie sessions (Web Crypto)
-│   └── validate.js        # booking input validation
+│   ├── validate.js        # booking input validation
+│   ├── llm.js             # OpenRouter client (model fallback array)
+│   ├── enrich.js          # intake enrichment: phone/lang/urgency + AI brief
+│   ├── draft.js           # WhatsApp draft agent (drafts only, humans send)
+│   └── digest.js          # daily stale-lead Telegram digest (no LLM)
 ├── migrations/
 │   └── 0001_init.sql      # shared schema — D1 migrations AND node:sqlite
 ├── wrangler.jsonc         # Cloudflare config (assets + D1 bindings)
