@@ -5,6 +5,16 @@
 
 import { ensureSchema } from './db.js';
 
+/**
+ * Names come from the public form, and Telegram auto-linkifies text — strip
+ * anything URL-shaped (dots, slashes) so a crafted "name" can't plant a
+ * tappable link next to our real wa.me links.
+ */
+function safeName(s) {
+  const clean = String(s || '').replace(/[^\p{L}\p{N} '\-]/gu, ' ').replace(/\s+/g, ' ').trim();
+  return clean.slice(0, 40) || '—';
+}
+
 /** "2025-07-18" (or anything Date can parse) → "Jul 18"; else the raw text. */
 function shortDate(s) {
   const str = String(s || '').trim();
@@ -56,7 +66,7 @@ export async function runDigest(env) {
     if (staleCount) {
       const names = (staleTop.results || []).map((b) => {
         const detail = [b.occasion, shortDate(b.shoot_date)].filter(Boolean).join(', ');
-        return detail ? `${b.name} (${detail})` : b.name;
+        return detail ? `${safeName(b.name)} (${detail})` : safeName(b.name);
       });
       if (staleCount > names.length) names.push(`+${staleCount - names.length} more`);
       lines.push(`⚠ ${staleCount} waiting >20h: ${names.join(', ')}`);
@@ -64,7 +74,7 @@ export async function runDigest(env) {
     if (touchCount) {
       // Include a tappable wa.me link when we have a normalized number.
       const names = (touchTop.results || []).map((b) =>
-        b.phone_e164 ? `${b.name} → wa.me/${b.phone_e164.slice(1)}` : b.name
+        b.phone_e164 ? `${safeName(b.name)} → wa.me/${b.phone_e164.slice(1)}` : safeName(b.name)
       );
       if (touchCount > names.length) names.push(`+${touchCount - names.length} more`);
       lines.push(`📞 ${touchCount} contacted >3d ago, need a 2nd touch: ${names.join(', ')}`);

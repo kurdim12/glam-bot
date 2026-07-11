@@ -448,7 +448,8 @@ async function loadContext(id) {
 
     let html = '';
     if (data.history && data.history.length) {
-      html += `<div class="detail-row"><div class="detail-label">↩ Returning client · ${data.history.length} other inquir${data.history.length === 1 ? 'y' : 'ies'}</div><div class="detail-value ctx-list">` +
+      const total = Number(data.history_total) || data.history.length;
+      html += `<div class="detail-row"><div class="detail-label">↩ Returning client · ${total} other inquir${total === 1 ? 'y' : 'ies'}</div><div class="detail-value ctx-list">` +
         data.history.map((h) => item(h.id, `${esc(h.occasion) || '—'} · ${fmtDate(h.shoot_date)} ${pill(h.status)}`)).join('') +
         '</div></div>';
     }
@@ -479,7 +480,9 @@ async function requestDraft(id) {
     // them; references captured before the await would be detached.)
     if (state.openId !== id) return;
     if (!res.ok || !data.ok || typeof data.message !== 'string') {
-      throw new Error(res.status === 404 ? 'draft-unsupported' : 'draft-failed');
+      const e = new Error(res.status === 404 ? 'draft-unsupported' : 'draft-failed');
+      e.serverError = typeof data.error === 'string' ? data.error : '';
+      throw e;
     }
 
     const ta = document.getElementById('draft-text');
@@ -513,7 +516,7 @@ async function requestDraft(id) {
     const errEl = document.getElementById('draft-err');
     errEl.textContent = err.message === 'draft-unsupported'
       ? 'Drafting is only available on the Cloudflare deployment.'
-      : 'Draft failed — try again.';
+      : err.serverError || 'Draft failed — try again.'; // textContent → safe
     errEl.hidden = false;
     document.getElementById('draft-btn').textContent = '↻ Retry draft';
   } finally {

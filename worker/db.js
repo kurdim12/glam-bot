@@ -172,7 +172,10 @@ export async function bookingContext(env, booking) {
       .all();
     same_date = res.results || [];
   }
-  return { history: historyRes.results || [], same_date };
+  const history = historyRes.results || [];
+  // history is LIMITed to 5 — report the true total so the drawer label is honest.
+  const history_total = history.length < 5 ? history.length : await countPriorBookings(env, booking);
+  return { history, history_total, same_date };
 }
 
 export async function stats(env) {

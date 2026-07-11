@@ -128,7 +128,7 @@ export default {
         const bookings = await db.listBookings(env, { status, q, occasion, limit, offset: (page - 1) * limit });
         // Flag bookings whose shoot date is shared with another active booking.
         const clashes = await db.dateClashSet(env);
-        for (const b of bookings) b.date_clash = clashes.has(b.shoot_date);
+        for (const b of bookings) b.date_clash = b.status !== 'cancelled' && clashes.has(b.shoot_date);
         return json({ ok: true, bookings, total, page, pages, limit });
       }
 
@@ -160,16 +160,32 @@ export default {
           return json({ ok: true, message, wa_url });
         } catch (err) {
           console.error(`Draft failed for booking ${booking.id}:`, err);
-          return json({ ok: false, error: 'Draft failed, try again.' }, 502);
+          // Tell the admin exactly what to fix — this panel is the only
+          // place LLM problems ever surface (enrichment fails silently).
+          const msg = String(err && err.message);
+          let error = 'Draft failed, try again.';
+          if (msg.includes('not set')) error = 'OpenRouter API key missing — add the OPENROUTER_API_KEY secret in Cloudflare and deploy.';
+          else if (msg.includes('OpenRouter 401')) error = 'OpenRouter rejected the API key — re-check its value in Cloudflare.';
+          else if (msg.includes('OpenRouter 402')) error = 'OpenRouter account has no credits — top up at openrouter.ai.';
+          else if (msg.includes('OpenRouter 404')) error = 'OpenRouter found no usable model — check the privacy/data settings on openrouter.ai.';
+          return json({ ok: false, error }, 502);
         }
       }
+
+      // Single-booking responses carry the same date_clash flag as the list,
+      // so a drawer save doesn't silently wipe the badge off the row.
+      const annotateClash = async (booking) => {
+        const clashes = await db.dateClashSet(env);
+        booking.date_clash = booking.status !== 'cancelled' && clashes.has(booking.shoot_date);
+        return booking;
+      };
 
       const m = pathname.match(/^\/api\/admin\/bookings\/(\d+)$/);
       if (m) {
         const id = Number(m[1]);
         if (method === 'GET') {
           const booking = await db.getBooking(env, id);
-          return booking ? json({ ok: true, booking }) : json({ ok: false, error: 'Not found.' }, 404);
+          return booking ? json({ ok: true, booking: await annotateClash(booking) }) : json({ ok: false, error: 'Not found.' }, 404);
         }
         if (method === 'PATCH') {
           const body = await readJson(request);
@@ -177,7 +193,7 @@ export default {
             return json({ ok: false, error: 'Unknown status.' }, 422);
           }
           const booking = await db.updateBooking(env, id, { status: body.status, admin_notes: body.admin_notes });
-          return booking ? json({ ok: true, booking }) : json({ ok: false, error: 'Not found.' }, 404);
+          return booking ? json({ ok: true, booking: await annotateClash(booking) }) : json({ ok: false, error: 'Not found.' }, 404);
         }
         if (method === 'DELETE') {
           const ok = await db.deleteBooking(env, id);
