@@ -194,6 +194,51 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
 .pill.completed { color: #4caf7d; }
 .pill.cancelled { color: var(--warm-grey); }
 
+/* ─── Enrichment badges (urgency + language) ─────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+.badge.hot  { color: #ff4d4d; background: rgba(255, 77, 77, 0.14); }
+.badge.warm { color: var(--amber-glow); background: rgba(255, 131, 64, 0.12); }
+.badge.lang { color: var(--warm-grey); background: rgba(136, 136, 134, 0.14); }
+
+/* ─── AI call brief (drawer) ─────────────────────────────────────────────── */
+.ai-brief {
+  color: var(--warm-grey);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-line; /* keep the brief's 2 lines */
+  border-left: 2px solid var(--slate);
+  padding-left: 12px;
+}
+
+/* ─── WhatsApp draft panel (drawer) ──────────────────────────────────────── */
+.draft-panel { margin-top: 12px; }
+.draft-panel .notes-input { min-height: 110px; direction: auto; unicode-bidi: plaintext; }
+.draft-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.draft-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--warm-grey);
+}
+.draft-err {
+  margin-top: 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--deep-fire);
+}
+
 /* ─── States ──────────────────────────────────────────────────────────────── */
 .state {
   padding: 80px 20px;
