@@ -35,6 +35,7 @@ export async function ensureSchema(env) {
     ['urgency', 'TEXT'], // 'hot' | 'warm' | 'normal'
     ['ai_brief', 'TEXT'], // 2-line LLM call brief
     ['enriched_at', 'TEXT'], // ISO timestamp of successful LLM enrichment
+    ['prior_bookings', 'INTEGER'], // same-client bookings that existed at intake
   ];
   for (const [name, type] of wanted) {
     if (!have.has(name)) {
@@ -121,6 +122,60 @@ export async function updateBooking(env, id, { status, admin_notes }) {
 export async function deleteBooking(env, id) {
   const res = await env.DB.prepare('DELETE FROM bookings WHERE id = ?').bind(id).run();
   return res.meta.changes > 0;
+}
+
+// The booking form stores shoot_date as either an ISO date or "Flexible";
+// only real dates can clash (all the Flexibles would otherwise "collide").
+const ISO_DATE_GLOB = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+
+/** Shoot dates shared by 2+ active bookings — the machine can't be in two places. */
+export async function dateClashSet(env) {
+  const res = await env.DB.prepare(
+    `SELECT shoot_date FROM bookings
+     WHERE status != 'cancelled' AND shoot_date GLOB '${ISO_DATE_GLOB}'
+     GROUP BY shoot_date HAVING COUNT(*) > 1`
+  ).all();
+  return new Set((res.results || []).map((r) => r.shoot_date));
+}
+
+/** Other bookings by the same client (matched on email or phone). */
+function sameClientQuery(select) {
+  return `SELECT ${select} FROM bookings
+     WHERE id != ? AND (LOWER(email) = LOWER(?) OR phone = ?
+       OR (phone_e164 IS NOT NULL AND phone_e164 = ?))`;
+}
+
+export async function countPriorBookings(env, booking) {
+  const row = await env.DB.prepare(sameClientQuery('COUNT(*) AS n'))
+    .bind(booking.id, booking.email || '', booking.phone || '', booking.phone_e164 || '')
+    .first();
+  return row ? row.n : 0;
+}
+
+/** Drawer context: this client's other inquiries + same-date bookings. */
+export async function bookingContext(env, booking) {
+  const historyRes = await env.DB.prepare(
+    sameClientQuery('id, occasion, shoot_date, status, created_at') +
+      ' ORDER BY created_at DESC LIMIT 5'
+  )
+    .bind(booking.id, booking.email || '', booking.phone || '', booking.phone_e164 || '')
+    .all();
+
+  let same_date = [];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(booking.shoot_date || '')) {
+    const res = await env.DB.prepare(
+      `SELECT id, name, occasion, status FROM bookings
+       WHERE id != ? AND shoot_date = ? AND status != 'cancelled'
+       ORDER BY created_at DESC LIMIT 5`
+    )
+      .bind(booking.id, booking.shoot_date)
+      .all();
+    same_date = res.results || [];
+  }
+  const history = historyRes.results || [];
+  // history is LIMITed to 5 — report the true total so the drawer label is honest.
+  const history_total = history.length < 5 ? history.length : await countPriorBookings(env, booking);
+  return { history, history_total, same_date };
 }
 
 export async function stats(env) {

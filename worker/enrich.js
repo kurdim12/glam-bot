@@ -6,7 +6,7 @@
 // first, so the booking is enriched even when the LLM is down; the model only
 // writes the 2-line call brief afterwards.
 
-import { getBooking } from './db.js';
+import { getBooking, countPriorBookings } from './db.js';
 import { callLLM, parseJsonReply } from './llm.js';
 
 /* ── Deterministic helpers ──────────────────────────────────────────────── */
@@ -72,8 +72,12 @@ export async function enrichBooking(env, id) {
     const phone_e164 = normalizePhoneJO(b.phone);
     const lang = detectLang(b.name, b.notes);
     const urgency = scoreUrgency(b.shoot_date);
-    await env.DB.prepare('UPDATE bookings SET phone_e164 = ?, lang = ?, urgency = ? WHERE id = ?')
-      .bind(phone_e164, lang, urgency, id)
+    // Returning client? Count this person's earlier inquiries (email/phone match).
+    const prior_bookings = await countPriorBookings(env, { ...b, phone_e164 });
+    await env.DB.prepare(
+      'UPDATE bookings SET phone_e164 = ?, lang = ?, urgency = ?, prior_bookings = ? WHERE id = ?'
+    )
+      .bind(phone_e164, lang, urgency, prior_bookings, id)
       .run();
 
     const payload = {
