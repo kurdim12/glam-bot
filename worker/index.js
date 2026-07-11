@@ -127,7 +127,7 @@ export default {
         const page = Math.min(Math.max(parseInt(url.searchParams.get('page'), 10) || 1, 1), pages);
         const bookings = await db.listBookings(env, { status, q, occasion, limit, offset: (page - 1) * limit });
         // Flag bookings whose shoot date is shared with another active booking.
-        const clashes = await db.dateClashSet(env);
+        const clashes = await db.dateClashSet(env, bookings.map((b) => b.shoot_date));
         for (const b of bookings) b.date_clash = b.status !== 'cancelled' && clashes.has(b.shoot_date);
         return json({ ok: true, bookings, total, page, pages, limit });
       }
@@ -175,7 +175,7 @@ export default {
       // Single-booking responses carry the same date_clash flag as the list,
       // so a drawer save doesn't silently wipe the badge off the row.
       const annotateClash = async (booking) => {
-        const clashes = await db.dateClashSet(env);
+        const clashes = await db.dateClashSet(env, [booking.shoot_date]);
         booking.date_clash = booking.status !== 'cancelled' && clashes.has(booking.shoot_date);
         return booking;
       };
