@@ -126,6 +126,9 @@ export default {
         const pages = Math.max(1, Math.ceil(total / limit));
         const page = Math.min(Math.max(parseInt(url.searchParams.get('page'), 10) || 1, 1), pages);
         const bookings = await db.listBookings(env, { status, q, occasion, limit, offset: (page - 1) * limit });
+        // Flag bookings whose shoot date is shared with another active booking.
+        const clashes = await db.dateClashSet(env);
+        for (const b of bookings) b.date_clash = clashes.has(b.shoot_date);
         return json({ ok: true, bookings, total, page, pages, limit });
       }
 
@@ -136,6 +139,14 @@ export default {
             'Content-Disposition': `attachment; filename="glambot-bookings-${Date.now()}.csv"`,
           },
         });
+      }
+
+      // Drawer context: same-client history + same-date bookings.
+      const cm = pathname.match(/^\/api\/admin\/bookings\/(\d+)\/context$/);
+      if (cm && method === 'GET') {
+        const booking = await db.getBooking(env, Number(cm[1]));
+        if (!booking) return json({ ok: false, error: 'Not found.' }, 404);
+        return json({ ok: true, ...(await db.bookingContext(env, booking)) });
       }
 
       // Draft a WhatsApp follow-up (agents draft, humans send — the admin

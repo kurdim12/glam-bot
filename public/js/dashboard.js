@@ -49,10 +49,12 @@ function fmtDateTime(iso) {
     ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
-/** Urgency + language chips (whitelisted values only — nothing else renders). */
+/** Urgency + language + client-signal chips (whitelisted values only — nothing else renders). */
 function badgeHtml(b) {
   let h = '';
   if (b.urgency === 'hot' || b.urgency === 'warm') h += `<span class="badge ${b.urgency}">${b.urgency}</span>`;
+  if (b.date_clash === true) h += '<span class="badge clash">⚠ date clash</span>';
+  if (Number(b.prior_bookings) > 0) h += '<span class="badge returning">↩ returning</span>';
   if (b.lang === 'ar' || b.lang === 'en') h += `<span class="badge lang">${b.lang.toUpperCase()}</span>`;
   return h;
 }
@@ -383,6 +385,7 @@ async function openDrawer(id) {
     detailRow('Email', `<a href="mailto:${esc(b.email)}">${esc(b.email)}</a>`),
     detailRow('Phone / WhatsApp', phoneHtml),
     b.ai_brief ? detailRow('AI Call Brief', `<div class="ai-brief">${esc(b.ai_brief)}</div>`) : '',
+    '<div id="d-context"><!-- same-client history + date clashes, loaded async --></div>',
     detailRow('Occasion', esc(b.occasion) || '—'),
     detailRow('Shoot Date', fmtDate(b.shoot_date)),
     detailRow('Location', esc(b.location) || '—'),
@@ -426,6 +429,39 @@ async function openDrawer(id) {
   document.getElementById('d-status').addEventListener('change', saveOpen);
   document.getElementById('d-notes').addEventListener('blur', saveOpen);
   document.getElementById('draft-btn').addEventListener('click', () => requestDraft(id));
+  loadContext(id); // best-effort, fills #d-context when it lands
+}
+
+/* ── Drawer context: returning-client history + same-date bookings ──────── */
+async function loadContext(id) {
+  try {
+    const res = await api(`/api/admin/bookings/${id}/context`);
+    const data = await res.json();
+    if (state.openId !== id || !data.ok) return; // drawer moved on
+    const el = document.getElementById('d-context');
+    if (!el) return;
+
+    const item = (entryId, label) =>
+      `<button type="button" class="ctx-item" data-id="${Number(entryId)}">${label}</button>`;
+    const pill = (s) =>
+      `<span class="pill ${STATUSES.includes(s) ? s : ''}">${STATUS_LABEL[s] || esc(s)}</span>`;
+
+    let html = '';
+    if (data.history && data.history.length) {
+      html += `<div class="detail-row"><div class="detail-label">↩ Returning client · ${data.history.length} other inquir${data.history.length === 1 ? 'y' : 'ies'}</div><div class="detail-value ctx-list">` +
+        data.history.map((h) => item(h.id, `${esc(h.occasion) || '—'} · ${fmtDate(h.shoot_date)} ${pill(h.status)}`)).join('') +
+        '</div></div>';
+    }
+    if (data.same_date && data.same_date.length) {
+      html += `<div class="detail-row"><div class="detail-label">⚠ Same shoot date — possible double-booking</div><div class="detail-value ctx-list">` +
+        data.same_date.map((s) => item(s.id, `${esc(s.name)} · ${esc(s.occasion) || '—'} ${pill(s.status)}`)).join('') +
+        '</div></div>';
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('.ctx-item').forEach((btn) =>
+      btn.addEventListener('click', () => openDrawer(Number(btn.dataset.id)))
+    );
+  } catch { /* context is a bonus — never block the drawer on it */ }
 }
 
 /* ── WhatsApp draft agent (drafts only — the owner sends) ───────────────── */

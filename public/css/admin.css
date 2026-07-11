@@ -208,9 +208,31 @@ table.bookings { width: 100%; border-collapse: collapse; font-size: 14px; }
   vertical-align: 2px;
   white-space: nowrap;
 }
-.badge.hot  { color: #ff4d4d; background: rgba(255, 77, 77, 0.14); }
-.badge.warm { color: var(--amber-glow); background: rgba(255, 131, 64, 0.12); }
-.badge.lang { color: var(--warm-grey); background: rgba(136, 136, 134, 0.14); }
+.badge.hot       { color: #ff4d4d; background: rgba(255, 77, 77, 0.14); }
+.badge.warm      { color: var(--amber-glow); background: rgba(255, 131, 64, 0.12); }
+.badge.lang      { color: var(--warm-grey); background: rgba(136, 136, 134, 0.14); }
+.badge.clash     { color: #ff4d4d; background: rgba(255, 77, 77, 0.14); border: 1px solid rgba(255, 77, 77, 0.4); }
+.badge.returning { color: #6cb8ff; background: rgba(62, 166, 255, 0.12); }
+
+/* ─── Drawer context (client history / same-date bookings) ───────────────── */
+.ctx-list { display: flex; flex-direction: column; gap: 6px; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: var(--charcoal);
+  border: 1px solid var(--slate);
+  color: var(--platinum);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.ctx-item:hover { border-color: var(--signal-orange); }
+.ctx-item .pill { margin-left: auto; }
 
 /* ─── AI call brief (drawer) ─────────────────────────────────────────────── */
 .ai-brief {

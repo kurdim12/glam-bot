@@ -21,8 +21,9 @@ export async function runDigest(env) {
     const now = Date.now();
     const dayAgo = new Date(now - 24 * 3600 * 1000).toISOString();
     const staleCutoff = new Date(now - 20 * 3600 * 1000).toISOString();
+    const touchCutoff = new Date(now - 3 * 24 * 3600 * 1000).toISOString();
 
-    const [newRow, staleRow, totalRow, staleTop] = await Promise.all([
+    const [newRow, staleRow, totalRow, staleTop, touchRow, touchTop] = await Promise.all([
       env.DB.prepare('SELECT COUNT(*) AS n FROM bookings WHERE created_at >= ?').bind(dayAgo).first(),
       env.DB.prepare("SELECT COUNT(*) AS n FROM bookings WHERE status = 'new' AND created_at < ?")
         .bind(staleCutoff)
@@ -34,11 +35,22 @@ export async function runDigest(env) {
       )
         .bind(staleCutoff)
         .all(),
+      // Second touch: contacted, then nothing moved for 3+ days.
+      env.DB.prepare("SELECT COUNT(*) AS n FROM bookings WHERE status = 'contacted' AND updated_at < ?")
+        .bind(touchCutoff)
+        .first(),
+      env.DB.prepare(
+        `SELECT name, phone_e164 FROM bookings
+         WHERE status = 'contacted' AND updated_at < ? ORDER BY updated_at LIMIT 3`
+      )
+        .bind(touchCutoff)
+        .all(),
     ]);
     const newCount = newRow?.n || 0;
     const staleCount = staleRow?.n || 0;
     const totalNew = totalRow?.n || 0;
-    if (!newCount && !staleCount && !totalNew) return; // quiet day → say nothing
+    const touchCount = touchRow?.n || 0;
+    if (!newCount && !staleCount && !totalNew && !touchCount) return; // quiet day → say nothing
 
     const lines = [`GLAMBOT — ${newCount} new lead${newCount === 1 ? '' : 's'} in the last 24h`];
     if (staleCount) {
@@ -48,6 +60,14 @@ export async function runDigest(env) {
       });
       if (staleCount > names.length) names.push(`+${staleCount - names.length} more`);
       lines.push(`⚠ ${staleCount} waiting >20h: ${names.join(', ')}`);
+    }
+    if (touchCount) {
+      // Include a tappable wa.me link when we have a normalized number.
+      const names = (touchTop.results || []).map((b) =>
+        b.phone_e164 ? `${b.name} → wa.me/${b.phone_e164.slice(1)}` : b.name
+      );
+      if (touchCount > names.length) names.push(`+${touchCount - names.length} more`);
+      lines.push(`📞 ${touchCount} contacted >3d ago, need a 2nd touch: ${names.join(', ')}`);
     }
     lines.push(`${totalNew} total in 'new' → glambotjo.com/admin`);
 

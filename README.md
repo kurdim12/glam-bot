@@ -30,6 +30,8 @@ Telegram digest behind three secrets — and degrades gracefully without them.
   [The agent layer](#the-agent-layer-cloudflare-only)):
   - every new booking is enriched in the background: normalized phone,
     language (AR/EN), urgency score, and a 2-line AI call brief,
+  - returning clients and same-date **double-booking clashes** are flagged
+    automatically (badges + drawer detail, no AI involved),
   - a per-booking **"Draft WhatsApp"** button generates a follow-up message in
     the lead's language — the owner reviews, edits, and sends it personally,
   - a daily **8:00 AM (Amman) Telegram digest** of new + stale leads.
@@ -108,6 +110,7 @@ cp .env.example .env
 | `PATCH`  | `/api/admin/bookings/:id`       | admin | Update status / internal notes|
 | `DELETE` | `/api/admin/bookings/:id`       | admin | Delete                        |
 | `POST`   | `/api/admin/bookings/:id/draft` | admin | AI WhatsApp draft (Worker only) |
+| `GET`    | `/api/admin/bookings/:id/context` | admin | Client history + date clashes (Worker only) |
 | `GET`    | `/api/admin/export.csv`         | admin | Download all bookings as CSV  |
 
 ## Scale & performance
@@ -234,12 +237,24 @@ formal فصحى). The message lands in an editable textarea; **Open WhatsApp**
 opens `wa.me` with the *edited* text prefilled, **Copy** copies it. Drafts are
 never stored and never sent automatically.
 
+### Returning clients & date clashes (no LLM)
+
+Two deterministic signals, computed from the data itself:
+
+- **↩ returning** — at intake, the Worker counts earlier bookings with the
+  same email or phone (`prior_bookings`). The badge appears on the row, and
+  the drawer lists the client's previous inquiries (tap one to open it).
+- **⚠ date clash** — any shoot date shared by two or more active
+  (non-cancelled) bookings is flagged on every affected row, and the drawer
+  lists the other bookings on that date. Flexible dates never clash.
+
 ### Daily stale-lead digest (Telegram, no LLM)
 
 A cron trigger (05:00 UTC = **8:00 AM Amman**) sends the owner one Telegram
 message: new leads in the last 24 h, leads sitting in `new` for over 20 h
-(named, up to 3), and the total `new` count. A completely quiet day sends
-nothing.
+(named, up to 3), leads marked `contacted` with no movement for 3+ days
+(named, with tappable wa.me links), and the total `new` count. A completely
+quiet day sends nothing.
 
 **Telegram setup:** create a bot with [@BotFather](https://t.me/BotFather) →
 that's `TELEGRAM_BOT_TOKEN`. Send your bot any message, then open
@@ -255,8 +270,8 @@ curl "http://localhost:8787/__scheduled?cron=0+5+*+*+*"
 
 ### Schema note
 
-The five agent columns (`phone_e164`, `lang`, `urgency`, `ai_brief`,
-`enriched_at`) are added by the Worker itself on first use — `ensureSchema`
+The agent columns (`phone_e164`, `lang`, `urgency`, `ai_brief`,
+`enriched_at`, `prior_bookings`) are added by the Worker itself on first use — `ensureSchema`
 diffs `PRAGMA table_info(bookings)` and `ALTER TABLE`s what's missing, so
 there is **no migration to run** and existing rows stay valid. (They are
 intentionally not in `migrations/`; the Node/Express backend doesn't use
