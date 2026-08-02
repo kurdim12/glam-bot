@@ -14,7 +14,8 @@ import { validateBooking } from './validate.js';
 import { enrichBooking } from './enrich.js';
 import { generateDraft } from './draft.js';
 import { runDigest } from './digest.js';
-import { draftInvoiceItems, renderInvoiceHtml } from './invoice.js';
+import { draftInvoiceItems, renderInvoiceHtml, computeTotals } from './invoice.js';
+import { buildInvoicePdf } from './pdf.js';
 
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), {
@@ -157,7 +158,7 @@ export default {
         return json({ ok: true, invoice: await db.getInvoice(env, id) }, 201);
       }
 
-      const im = pathname.match(/^\/api\/admin\/invoices\/(\d+)(\/print)?$/);
+      const im = pathname.match(/^\/api\/admin\/invoices\/(\d+)(\/print|\/pdf)?$/);
       if (im) {
         const invoice = await db.getInvoice(env, Number(im[1]));
         if (!invoice) {
@@ -166,9 +167,18 @@ export default {
             : json({ ok: false, error: 'Not found.' }, 404);
         }
         // Print view: a full HTML page the browser prints to PDF.
-        if (im[2] && method === 'GET') {
+        if (im[2] === '/print' && method === 'GET') {
           return new Response(renderInvoiceHtml(invoice), {
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
+        }
+        // Direct download: a real PDF file, generated in the Worker.
+        if (im[2] === '/pdf' && method === 'GET') {
+          return new Response(buildInvoicePdf(invoice, computeTotals(invoice.items, invoice.tax_rate)), {
+            headers: {
+              'Content-Type': 'application/pdf',
+              'Content-Disposition': `attachment; filename="Invoice-${invoice.number}.pdf"`,
+            },
           });
         }
         if (!im[2] && method === 'GET') return json({ ok: true, invoice });

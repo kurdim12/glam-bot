@@ -175,13 +175,24 @@
             <option value="paid">Paid</option>
           </select>
         </div>
+        <div class="inv-send" id="inv-send" hidden>
+          <div class="detail-label" style="margin-top:18px">Send to client — WhatsApp</div>
+          <textarea class="notes-input" id="inv-msg" rows="3" aria-label="Message to the client"></textarea>
+          <div class="inv-send-actions">
+            <button type="button" class="btn btn-solid" id="inv-share" hidden>📎 Share PDF + message</button>
+            <button type="button" class="btn" id="inv-download">⬇ Download PDF</button>
+            <button type="button" class="btn" id="inv-wa" hidden>Open WhatsApp</button>
+            <button type="button" class="btn" id="inv-copy-msg">Copy message</button>
+          </div>
+          <p class="draft-hint" id="inv-send-hint">Download the PDF, then attach it in WhatsApp — nothing is sent automatically.</p>
+        </div>
         <div class="draft-err" id="inv-err" hidden></div>
       </div>
       <div class="drawer-foot">
         <button class="btn btn-danger" id="inv-delete" hidden>Delete</button>
         <span class="save-hint" id="inv-hint"></span>
         <div class="inv-foot-actions">
-          <button class="btn" id="inv-print" hidden>⎙ Print / PDF</button>
+          <button class="btn" id="inv-print" hidden>⎙ Print</button>
           <button class="btn btn-solid" id="inv-save">Save Invoice</button>
         </div>
       </div>

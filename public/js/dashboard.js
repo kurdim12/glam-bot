@@ -439,6 +439,7 @@ async function openDrawer(id) {
       booking_id: id,
       client_name: b.name,
       client_contact: [b.phone_e164 || b.phone, b.email].filter(Boolean).join(' · '),
+      lang: b.lang,
     })
   );
   loadContext(id); // best-effort, fills #d-context when it lands
@@ -814,7 +815,14 @@ function startLive() {
 
 /* ── Invoices (agent drafts descriptions — the owner sets every price) ──── */
 const INV_STATUS_LABEL = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
-const invModal = { id: null, booking_id: null };
+const invModal = { id: null, booking_id: null, number: '', lang: 'en' };
+
+/** Can this device hand a PDF straight to WhatsApp via the share sheet? */
+const canShareFiles = (() => {
+  try {
+    return !!(navigator.canShare && navigator.canShare({ files: [new File([''], 'x.pdf', { type: 'application/pdf' })] }));
+  } catch { return false; }
+})();
 
 function invParseItems(inv) {
   try {
@@ -856,7 +864,10 @@ async function loadInvoices() {
           <td class="hide-sm" data-label="Date">${esc(inv.issued_at)}</td>
           <td data-label="Total">${t.total.toFixed(2)} ${esc(inv.currency)}</td>
           <td data-label="Status">${invPill(inv.status)}</td>
-          <td data-label=""><button type="button" class="btn inv-open-print" data-inv="${inv.id}">⎙</button></td>
+          <td data-label="">
+            <button type="button" class="btn inv-open-pdf" data-inv="${inv.id}" title="Download PDF">⬇</button>
+            <button type="button" class="btn inv-open-print" data-inv="${inv.id}" title="Print view">⎙</button>
+          </td>
         </tr>`;
       })
       .join('');
@@ -865,6 +876,10 @@ async function loadInvoices() {
         const id = Number(tr.dataset.inv);
         if (e.target.closest('.inv-open-print')) {
           window.open(`/api/admin/invoices/${id}/print`, '_blank', 'noopener');
+          return;
+        }
+        if (e.target.closest('.inv-open-pdf')) {
+          downloadInvoicePdf(id);
           return;
         }
         const inv = invoices.find((x) => x.id === id);
@@ -933,9 +948,36 @@ function invRefreshTotals() {
     <span class="inv-grand">Total <b>${t.total.toFixed(2)} JOD</b></span>`;
 }
 
+/** Prefilled client message — deterministic, in the lead's language; the admin edits freely. */
+function invDefaultMessage() {
+  const first = (document.getElementById('inv-client').value.trim().split(/\s+/)[0]) || '';
+  const t = invTotals(invCollectItems(), document.getElementById('inv-tax').value);
+  return invModal.lang === 'ar'
+    ? `مرحبا ${first}! هاي فاتورة GLAMBOT رقم ${invModal.number} — المجموع ${t.total.toFixed(2)} دينار. الفاتورة PDF مرفقة، ولأي سؤال أنا موجود ✨`
+    : `Hi ${first}! Here's your GLAMBOT invoice ${invModal.number} — total ${t.total.toFixed(2)} JOD. The PDF is attached. Let me know if you have any questions ✨`;
+}
+function invClientDigits() {
+  const m = document.getElementById('inv-contact').value.match(/\+?[\d][\d\s\-().]{7,}/);
+  return m ? m[0].replace(/[^\d]/g, '') : '';
+}
+function invRefreshSend() {
+  const send = document.getElementById('inv-send');
+  send.hidden = invModal.id == null;
+  if (invModal.id == null) return;
+  const msg = document.getElementById('inv-msg');
+  if (!msg.value.trim()) msg.value = invDefaultMessage();
+  document.getElementById('inv-share').hidden = !canShareFiles;
+  document.getElementById('inv-wa').hidden = !invClientDigits();
+  document.getElementById('inv-send-hint').textContent = canShareFiles
+    ? 'Share sends the PDF straight to WhatsApp — pick the chat there. Nothing is sent automatically.'
+    : 'Download the PDF, then attach it in the WhatsApp chat — nothing is sent automatically.';
+}
+
 function openInvoiceModal(inv, prefill) {
   invModal.id = inv ? inv.id : null;
   invModal.booking_id = inv ? inv.booking_id : (prefill && prefill.booking_id) || null;
+  invModal.number = inv ? inv.number : '';
+  invModal.lang = (prefill && prefill.lang) || (inv && inv.lang) || 'en';
 
   document.getElementById('inv-title').textContent = inv ? `Invoice ${inv.number}` : 'New Invoice';
   document.getElementById('inv-client').value = inv ? inv.client_name : (prefill && prefill.client_name) || '';
@@ -958,8 +1000,10 @@ function openInvoiceModal(inv, prefill) {
   document.getElementById('inv-print').hidden = !inv;
   document.getElementById('inv-delete').hidden = !inv;
   document.getElementById('inv-draft-items').hidden = !invModal.booking_id;
+  document.getElementById('inv-msg').value = '';
 
   invRefreshTotals();
+  invRefreshSend();
   document.getElementById('inv-overlay').hidden = false;
 }
 function closeInvoiceModal() {
@@ -994,11 +1038,13 @@ async function saveInvoice() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error('save');
     invModal.id = data.invoice.id;
+    invModal.number = data.invoice.number;
     document.getElementById('inv-title').textContent = `Invoice ${data.invoice.number}`;
     document.getElementById('inv-status-row').hidden = false;
     document.getElementById('inv-status').value = data.invoice.status;
     document.getElementById('inv-print').hidden = false;
     document.getElementById('inv-delete').hidden = false;
+    invRefreshSend();
     hint.textContent = 'Saved ✓';
     hint.classList.add('saved');
     if (state.view === 'invoices') loadInvoices();
@@ -1056,6 +1102,58 @@ async function deleteInvoiceUI() {
     toast('Could not delete the invoice.', 'error');
   }
 }
+
+/* ── Send to client: direct PDF download + WhatsApp handoff ─────────────── */
+function downloadInvoicePdf(id) {
+  // The endpoint sets Content-Disposition: attachment, so this saves the file.
+  const a = document.createElement('a');
+  a.href = `/api/admin/invoices/${id}/pdf`;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function shareInvoicePdf() {
+  if (invModal.id == null) return;
+  const btn = document.getElementById('inv-share');
+  const message = document.getElementById('inv-msg').value;
+  btn.disabled = true;
+  try {
+    const res = await api(`/api/admin/invoices/${invModal.id}/pdf`);
+    if (!res.ok) throw new Error('pdf');
+    const file = new File([await res.blob()], `Invoice-${invModal.number}.pdf`, { type: 'application/pdf' });
+    // Some share targets drop the text when a file is attached — keep the
+    // message on the clipboard so the admin can paste it in the chat.
+    try { await navigator.clipboard.writeText(message); } catch { /* ignore */ }
+    await navigator.share({ files: [file], text: message, title: `Invoice ${invModal.number}` });
+    toast('Message copied too — paste it in the chat if it did not carry over.', 'info', 6000);
+  } catch (err) {
+    if (err && err.name === 'AbortError') return; // admin closed the share sheet
+    toast('Could not share — use Download PDF instead.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('inv-download').addEventListener('click', () => {
+  if (invModal.id != null) downloadInvoicePdf(invModal.id);
+});
+document.getElementById('inv-share').addEventListener('click', shareInvoicePdf);
+document.getElementById('inv-wa').addEventListener('click', () => {
+  const digits = invClientDigits();
+  if (!digits) return;
+  const text = document.getElementById('inv-msg').value;
+  window.open(`https://wa.me/${digits}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+});
+document.getElementById('inv-copy-msg').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(document.getElementById('inv-msg').value);
+    toast('Message copied.', 'success');
+  } catch {
+    toast('Could not copy — select the text manually.', 'error');
+  }
+});
 
 document.getElementById('inv-new').addEventListener('click', () => openInvoiceModal(null));
 document.getElementById('inv-close').addEventListener('click', closeInvoiceModal);
