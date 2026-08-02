@@ -404,6 +404,11 @@ async function openDrawer(id) {
       `<textarea class="notes-input drawer-control" id="d-notes" placeholder="Notes for your team...">${esc(b.admin_notes)}</textarea>`
     ),
     detailRow(
+      'Invoices',
+      `<div id="d-invoices" class="ctx-list"><span class="muted">Loading…</span></div>
+      <button type="button" class="btn drawer-control" id="d-inv-new">＋ New Invoice</button>`
+    ),
+    detailRow(
       'WhatsApp Follow-up',
       `<button type="button" class="btn" id="draft-btn">✦ Draft WhatsApp</button>
       <div class="draft-panel" id="draft-panel" hidden>
@@ -429,7 +434,15 @@ async function openDrawer(id) {
   document.getElementById('d-status').addEventListener('change', saveOpen);
   document.getElementById('d-notes').addEventListener('blur', saveOpen);
   document.getElementById('draft-btn').addEventListener('click', () => requestDraft(id));
+  document.getElementById('d-inv-new').addEventListener('click', () =>
+    openInvoiceModal(null, {
+      booking_id: id,
+      client_name: b.name,
+      client_contact: [b.phone_e164 || b.phone, b.email].filter(Boolean).join(' · '),
+    })
+  );
   loadContext(id); // best-effort, fills #d-context when it lands
+  loadDrawerInvoices(id); // best-effort, fills #d-invoices
 }
 
 /* ── Drawer context: returning-client history + same-date bookings ──────── */
@@ -619,11 +632,13 @@ function showView(v) {
   document.getElementById('view-table').hidden = v !== 'table';
   document.getElementById('board').hidden = v !== 'board';
   document.getElementById('view-pivot').hidden = v !== 'pivot';
+  document.getElementById('view-invoices').hidden = v !== 'invoices';
   document.querySelectorAll('.vt').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   document.getElementById('search').style.display = v === 'table' ? '' : 'none';
   document.getElementById('result-count').style.display = v === 'table' ? '' : 'none';
   if (v === 'board') loadBoard();
   if (v === 'pivot') loadAnalytics();
+  if (v === 'invoices') loadInvoices();
 }
 
 /* ── Events ─────────────────────────────────────────────────────────────── */
@@ -796,6 +811,271 @@ function startLive() {
     } catch { /* ignore poll errors */ }
   }, 18000);
 }
+
+/* ── Invoices (agent drafts descriptions — the owner sets every price) ──── */
+const INV_STATUS_LABEL = { draft: 'Draft', sent: 'Sent', paid: 'Paid' };
+const invModal = { id: null, booking_id: null };
+
+function invParseItems(inv) {
+  try {
+    const items = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items || [];
+    return Array.isArray(items) ? items : [];
+  } catch { return []; }
+}
+function invTotals(items, taxRate) {
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const subtotal = r2(items.reduce((s, it) => s + (Number(it.amount) || 0), 0));
+  const tax = r2((subtotal * (Number(taxRate) || 0)) / 100);
+  return { subtotal, tax, total: r2(subtotal + tax) };
+}
+function invPill(status) {
+  const s = ['draft', 'sent', 'paid'].includes(status) ? status : 'draft';
+  return `<span class="pill inv-${s}">${INV_STATUS_LABEL[s]}</span>`;
+}
+
+async function loadInvoices() {
+  const tbody = document.getElementById('inv-rows');
+  const stateEl = document.getElementById('inv-state');
+  try {
+    const res = await api('/api/admin/invoices');
+    const data = await res.json();
+    const invoices = data.invoices || [];
+    if (!invoices.length) {
+      tbody.innerHTML = '';
+      stateEl.style.display = 'block';
+      stateEl.textContent = 'No invoices yet. Create one from a booking, or with ＋ New Invoice.';
+      return;
+    }
+    stateEl.style.display = 'none';
+    tbody.innerHTML = invoices
+      .map((inv) => {
+        const t = invTotals(invParseItems(inv), inv.tax_rate);
+        return `<tr data-inv="${inv.id}">
+          <td data-label="No."><b>${esc(inv.number)}</b></td>
+          <td data-label="Client">${esc(inv.client_name)}</td>
+          <td class="hide-sm" data-label="Date">${esc(inv.issued_at)}</td>
+          <td data-label="Total">${t.total.toFixed(2)} ${esc(inv.currency)}</td>
+          <td data-label="Status">${invPill(inv.status)}</td>
+          <td data-label=""><button type="button" class="btn inv-open-print" data-inv="${inv.id}">⎙</button></td>
+        </tr>`;
+      })
+      .join('');
+    tbody.querySelectorAll('tr[data-inv]').forEach((tr) =>
+      tr.addEventListener('click', async (e) => {
+        const id = Number(tr.dataset.inv);
+        if (e.target.closest('.inv-open-print')) {
+          window.open(`/api/admin/invoices/${id}/print`, '_blank', 'noopener');
+          return;
+        }
+        const inv = invoices.find((x) => x.id === id);
+        if (inv) openInvoiceModal(inv);
+      })
+    );
+  } catch (err) {
+    if (err.message !== 'unauthorized') {
+      stateEl.style.display = 'block';
+      stateEl.textContent = 'Could not load invoices.';
+    }
+  }
+}
+
+async function loadDrawerInvoices(bookingId) {
+  try {
+    const res = await api(`/api/admin/invoices?booking_id=${bookingId}`);
+    const data = await res.json();
+    if (state.openId !== bookingId) return;
+    const el = document.getElementById('d-invoices');
+    if (!el) return;
+    const invoices = data.invoices || [];
+    if (!invoices.length) { el.innerHTML = '<span class="muted">No invoices for this booking yet.</span>'; return; }
+    el.innerHTML = invoices
+      .map((inv) => {
+        const t = invTotals(invParseItems(inv), inv.tax_rate);
+        return `<button type="button" class="ctx-item inv-drawer-item" data-inv="${inv.id}">
+          ${esc(inv.number)} · ${t.total.toFixed(2)} ${esc(inv.currency)} ${invPill(inv.status)}</button>`;
+      })
+      .join('');
+    el.querySelectorAll('.inv-drawer-item').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const inv = invoices.find((x) => x.id === Number(btn.dataset.inv));
+        if (inv) openInvoiceModal(inv);
+      })
+    );
+  } catch { /* invoices list is a bonus — never block the drawer */ }
+}
+
+/* ── Invoice editor modal ───────────────────────────────────────────────── */
+function invItemRow(desc, amt) {
+  const row = document.createElement('div');
+  row.className = 'inv-item';
+  row.innerHTML = `
+    <input class="notes-input inv-input inv-item-desc" placeholder="Service or package" maxlength="200" />
+    <input class="notes-input inv-input inv-item-amt" type="number" min="0" step="0.01" placeholder="0.00" />
+    <button type="button" class="inv-item-x" aria-label="Remove line">✕</button>`;
+  row.querySelector('.inv-item-desc').value = desc || ''; // .value — never innerHTML
+  row.querySelector('.inv-item-amt').value = amt === 0 || amt ? amt : '';
+  row.querySelector('.inv-item-x').addEventListener('click', () => { row.remove(); invRefreshTotals(); });
+  return row;
+}
+function invCollectItems() {
+  return [...document.querySelectorAll('#inv-items .inv-item')]
+    .map((row) => ({
+      description: row.querySelector('.inv-item-desc').value.trim(),
+      amount: Number(row.querySelector('.inv-item-amt').value) || 0,
+    }))
+    .filter((it) => it.description);
+}
+function invRefreshTotals() {
+  const t = invTotals(invCollectItems(), document.getElementById('inv-tax').value);
+  document.getElementById('inv-totals').innerHTML = `
+    <span>Subtotal <b>${t.subtotal.toFixed(2)}</b></span>
+    <span>Tax <b>${t.tax.toFixed(2)}</b></span>
+    <span class="inv-grand">Total <b>${t.total.toFixed(2)} JOD</b></span>`;
+}
+
+function openInvoiceModal(inv, prefill) {
+  invModal.id = inv ? inv.id : null;
+  invModal.booking_id = inv ? inv.booking_id : (prefill && prefill.booking_id) || null;
+
+  document.getElementById('inv-title').textContent = inv ? `Invoice ${inv.number}` : 'New Invoice';
+  document.getElementById('inv-client').value = inv ? inv.client_name : (prefill && prefill.client_name) || '';
+  document.getElementById('inv-contact').value = inv ? inv.client_contact : (prefill && prefill.client_contact) || '';
+  document.getElementById('inv-date').value = inv ? inv.issued_at : new Date().toISOString().slice(0, 10);
+  document.getElementById('inv-tax').value = inv ? inv.tax_rate : 0;
+  document.getElementById('inv-notes').value = inv ? inv.notes : '';
+  document.getElementById('inv-hint').textContent = '';
+  document.getElementById('inv-err').hidden = true;
+
+  const itemsEl = document.getElementById('inv-items');
+  itemsEl.innerHTML = '';
+  const items = inv ? invParseItems(inv) : [];
+  (items.length ? items : [{ description: '', amount: '' }]).forEach((it) =>
+    itemsEl.appendChild(invItemRow(it.description, it.amount))
+  );
+
+  document.getElementById('inv-status-row').hidden = !inv;
+  if (inv) document.getElementById('inv-status').value = ['draft', 'sent', 'paid'].includes(inv.status) ? inv.status : 'draft';
+  document.getElementById('inv-print').hidden = !inv;
+  document.getElementById('inv-delete').hidden = !inv;
+  document.getElementById('inv-draft-items').hidden = !invModal.booking_id;
+
+  invRefreshTotals();
+  document.getElementById('inv-overlay').hidden = false;
+}
+function closeInvoiceModal() {
+  document.getElementById('inv-overlay').hidden = true;
+  invModal.id = null;
+  invModal.booking_id = null;
+}
+
+async function saveInvoice() {
+  const hint = document.getElementById('inv-hint');
+  const errEl = document.getElementById('inv-err');
+  errEl.hidden = true;
+  const body = {
+    booking_id: invModal.booking_id,
+    client_name: document.getElementById('inv-client').value.trim(),
+    client_contact: document.getElementById('inv-contact').value.trim(),
+    issued_at: document.getElementById('inv-date').value,
+    tax_rate: Number(document.getElementById('inv-tax').value) || 0,
+    items: invCollectItems(),
+    notes: document.getElementById('inv-notes').value,
+  };
+  if (!body.client_name) { errEl.textContent = 'Client name is required.'; errEl.hidden = false; return; }
+  if (invModal.id) body.status = document.getElementById('inv-status').value;
+  hint.textContent = 'Saving...';
+  hint.classList.remove('saved');
+  try {
+    const res = await api(invModal.id ? `/api/admin/invoices/${invModal.id}` : '/api/admin/invoices', {
+      method: invModal.id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error('save');
+    invModal.id = data.invoice.id;
+    document.getElementById('inv-title').textContent = `Invoice ${data.invoice.number}`;
+    document.getElementById('inv-status-row').hidden = false;
+    document.getElementById('inv-status').value = data.invoice.status;
+    document.getElementById('inv-print').hidden = false;
+    document.getElementById('inv-delete').hidden = false;
+    hint.textContent = 'Saved ✓';
+    hint.classList.add('saved');
+    if (state.view === 'invoices') loadInvoices();
+    if (state.openId != null) loadDrawerInvoices(state.openId);
+  } catch (err) {
+    if (err.message === 'unauthorized') return;
+    hint.textContent = '';
+    errEl.textContent = 'Could not save the invoice — try again.';
+    errEl.hidden = false;
+  }
+}
+
+async function draftInvoiceItemsUI() {
+  if (!invModal.booking_id) return;
+  const btn = document.getElementById('inv-draft-items');
+  const errEl = document.getElementById('inv-err');
+  btn.disabled = true;
+  btn.textContent = 'Drafting…';
+  errEl.hidden = true;
+  try {
+    const res = await api(`/api/admin/bookings/${invModal.booking_id}/invoice-draft`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || !Array.isArray(data.items)) {
+      errEl.textContent = typeof data.error === 'string' ? data.error : 'Draft failed — try again.';
+      errEl.hidden = false;
+      return;
+    }
+    const itemsEl = document.getElementById('inv-items');
+    // Replace empty rows; keep any line the owner already filled in.
+    [...itemsEl.querySelectorAll('.inv-item')].forEach((row) => {
+      if (!row.querySelector('.inv-item-desc').value.trim()) row.remove();
+    });
+    data.items.forEach((it) => itemsEl.appendChild(invItemRow(it.description, '')));
+    invRefreshTotals();
+  } catch (err) {
+    if (err.message === 'unauthorized') return;
+    errEl.textContent = 'Draft failed — try again.';
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Draft items';
+  }
+}
+
+async function deleteInvoiceUI() {
+  if (invModal.id == null) return;
+  if (!confirm('Delete this invoice? This cannot be undone.')) return;
+  const res = await api(`/api/admin/invoices/${invModal.id}`, { method: 'DELETE' });
+  if (res.ok) {
+    closeInvoiceModal();
+    if (state.view === 'invoices') loadInvoices();
+    if (state.openId != null) loadDrawerInvoices(state.openId);
+    toast('Invoice deleted.', 'success');
+  } else {
+    toast('Could not delete the invoice.', 'error');
+  }
+}
+
+document.getElementById('inv-new').addEventListener('click', () => openInvoiceModal(null));
+document.getElementById('inv-close').addEventListener('click', closeInvoiceModal);
+document.getElementById('inv-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('inv-overlay')) closeInvoiceModal();
+});
+document.getElementById('inv-save').addEventListener('click', saveInvoice);
+document.getElementById('inv-delete').addEventListener('click', deleteInvoiceUI);
+document.getElementById('inv-draft-items').addEventListener('click', draftInvoiceItemsUI);
+document.getElementById('inv-add-item').addEventListener('click', () => {
+  document.getElementById('inv-items').appendChild(invItemRow('', ''));
+});
+document.getElementById('inv-print').addEventListener('click', () => {
+  if (invModal.id != null) window.open(`/api/admin/invoices/${invModal.id}/print`, '_blank', 'noopener');
+});
+document.getElementById('inv-items').addEventListener('input', invRefreshTotals);
+document.getElementById('inv-tax').addEventListener('input', invRefreshTotals);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !document.getElementById('inv-overlay').hidden) closeInvoiceModal();
+});
 
 /* ── Boot ───────────────────────────────────────────────────────────────── */
 (async function init() {
