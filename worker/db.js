@@ -29,6 +29,30 @@ export async function ensureSchema(env) {
   // Agent-layer columns, added after the fact — ALTER TABLE has no IF NOT
   // EXISTS in SQLite, so diff against PRAGMA table_info instead. All nullable,
   // no defaults: pre-existing rows stay valid, un-enriched rows read as NULL.
+  // Invoices (agent layer): line items live as a JSON array in `items`
+  // ([{description, amount}]); totals are recomputed server-side on render so
+  // stored JSON is never trusted for money math.
+  await env.DB.batch([
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        number TEXT NOT NULL UNIQUE,
+        booking_id INTEGER,
+        client_name TEXT NOT NULL,
+        client_contact TEXT NOT NULL DEFAULT '',
+        items TEXT NOT NULL DEFAULT '[]',
+        tax_rate REAL NOT NULL DEFAULT 0,
+        currency TEXT NOT NULL DEFAULT 'JOD',
+        notes TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'draft',
+        issued_at TEXT NOT NULL,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      )`
+    ),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_invoices_booking ON invoices(booking_id)'),
+    env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_invoices_created ON invoices(created_at)'),
+  ]);
+
   const info = await env.DB.prepare('PRAGMA table_info(bookings)').all();
   const have = new Set((info.results || []).map((c) => c.name));
   const wanted = [
@@ -191,6 +215,123 @@ export async function bookingContext(env, booking) {
   // history is LIMITed to 5 — report the true total so the drawer label is honest.
   const history_total = history.length < 5 ? history.length : await countPriorBookings(env, booking);
   return { history, history_total, same_date };
+}
+
+/* ── Invoices ───────────────────────────────────────────────────────────── */
+
+export const INVOICE_STATUSES = ['draft', 'sent', 'paid'];
+
+/** Normalize client-supplied line items: strings + finite non-negative numbers only. */
+export function sanitizeInvoiceItems(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((it) => ({
+      description: String(it && it.description ? it.description : '').trim().slice(0, 200),
+      amount: Math.max(0, Math.round((Number(it && it.amount) || 0) * 100) / 100),
+    }))
+    .filter((it) => it.description)
+    .slice(0, 20);
+}
+
+/** Next number in the GB-<year>-NNNN sequence (single-admin shop; no race expected). */
+async function nextInvoiceNumber(env) {
+  const year = new Date().getFullYear();
+  const prefix = `GB-${year}-`;
+  const row = await env.DB.prepare(
+    'SELECT number FROM invoices WHERE number LIKE ? ORDER BY id DESC LIMIT 1'
+  )
+    .bind(prefix + '%')
+    .first();
+  const last = row ? parseInt(row.number.slice(prefix.length), 10) || 0 : 0;
+  return prefix + String(last + 1).padStart(4, '0');
+}
+
+export async function createInvoice(env, inv) {
+  const now = new Date().toISOString();
+  const items = JSON.stringify(sanitizeInvoiceItems(inv.items));
+  // One retry in case two isolates grab the same number (UNIQUE constraint).
+  for (let attempt = 0; ; attempt++) {
+    const number = await nextInvoiceNumber(env);
+    try {
+      const res = await env.DB.prepare(
+        `INSERT INTO invoices (number, booking_id, client_name, client_contact, items, tax_rate, currency, notes, status, issued_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'JOD', ?, 'draft', ?, ?, ?)`
+      )
+        .bind(
+          number,
+          inv.booking_id || null,
+          String(inv.client_name || '').slice(0, 120),
+          String(inv.client_contact || '').slice(0, 200),
+          items,
+          Math.min(Math.max(Number(inv.tax_rate) || 0, 0), 100),
+          String(inv.notes || '').slice(0, 1000),
+          inv.issued_at || now.slice(0, 10),
+          now,
+          now
+        )
+        .run();
+      return res.meta.last_row_id;
+    } catch (err) {
+      if (attempt >= 1 || !/unique/i.test(String(err) + String(err?.cause || ''))) throw err;
+    }
+  }
+}
+
+export async function getInvoice(env, id) {
+  return (await env.DB.prepare('SELECT * FROM invoices WHERE id = ?').bind(id).first()) || null;
+}
+
+export async function listInvoices(env, { booking_id, limit = 100, offset = 0 } = {}) {
+  const res = booking_id
+    ? await env.DB.prepare('SELECT * FROM invoices WHERE booking_id = ? ORDER BY id DESC LIMIT ? OFFSET ?')
+        .bind(booking_id, limit, offset)
+        .all()
+    : await env.DB.prepare('SELECT * FROM invoices ORDER BY id DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+  return res.results || [];
+}
+
+export async function countInvoices(env) {
+  const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM invoices').first();
+  return row ? row.n : 0;
+}
+
+export async function updateInvoice(env, id, patch) {
+  const existing = await getInvoice(env, id);
+  if (!existing) return null;
+  const next = {
+    client_name: patch.client_name !== undefined ? String(patch.client_name).slice(0, 120) : existing.client_name,
+    client_contact:
+      patch.client_contact !== undefined ? String(patch.client_contact).slice(0, 200) : existing.client_contact,
+    items: patch.items !== undefined ? JSON.stringify(sanitizeInvoiceItems(patch.items)) : existing.items,
+    tax_rate:
+      patch.tax_rate !== undefined ? Math.min(Math.max(Number(patch.tax_rate) || 0, 0), 100) : existing.tax_rate,
+    notes: patch.notes !== undefined ? String(patch.notes).slice(0, 1000) : existing.notes,
+    status:
+      patch.status !== undefined && INVOICE_STATUSES.includes(patch.status) ? patch.status : existing.status,
+    issued_at: patch.issued_at !== undefined ? String(patch.issued_at).slice(0, 10) : existing.issued_at,
+  };
+  await env.DB.prepare(
+    `UPDATE invoices SET client_name = ?, client_contact = ?, items = ?, tax_rate = ?, notes = ?, status = ?, issued_at = ?, updated_at = ?
+     WHERE id = ?`
+  )
+    .bind(
+      next.client_name,
+      next.client_contact,
+      next.items,
+      next.tax_rate,
+      next.notes,
+      next.status,
+      next.issued_at,
+      new Date().toISOString(),
+      id
+    )
+    .run();
+  return getInvoice(env, id);
+}
+
+export async function deleteInvoice(env, id) {
+  const res = await env.DB.prepare('DELETE FROM invoices WHERE id = ?').bind(id).run();
+  return res.meta.changes > 0;
 }
 
 export async function stats(env) {

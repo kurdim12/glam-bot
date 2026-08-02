@@ -14,6 +14,7 @@ import { validateBooking } from './validate.js';
 import { enrichBooking } from './enrich.js';
 import { generateDraft } from './draft.js';
 import { runDigest } from './digest.js';
+import { draftInvoiceItems, renderInvoiceHtml } from './invoice.js';
 
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), {
@@ -139,6 +140,68 @@ export default {
             'Content-Disposition': `attachment; filename="glambot-bookings-${Date.now()}.csv"`,
           },
         });
+      }
+
+      // ── Invoices ──────────────────────────────────────────────────────
+      if (pathname === '/api/admin/invoices' && method === 'GET') {
+        const booking_id = parseInt(url.searchParams.get('booking_id'), 10) || undefined;
+        const invoices = await db.listInvoices(env, { booking_id });
+        return json({ ok: true, invoices, total: await db.countInvoices(env) });
+      }
+      if (pathname === '/api/admin/invoices' && method === 'POST') {
+        const body = await readJson(request);
+        if (!String(body.client_name || '').trim()) {
+          return json({ ok: false, error: 'Client name is required.' }, 422);
+        }
+        const id = await db.createInvoice(env, body);
+        return json({ ok: true, invoice: await db.getInvoice(env, id) }, 201);
+      }
+
+      const im = pathname.match(/^\/api\/admin\/invoices\/(\d+)(\/print)?$/);
+      if (im) {
+        const invoice = await db.getInvoice(env, Number(im[1]));
+        if (!invoice) {
+          return im[2]
+            ? new Response('Invoice not found.', { status: 404 })
+            : json({ ok: false, error: 'Not found.' }, 404);
+        }
+        // Print view: a full HTML page the browser prints to PDF.
+        if (im[2] && method === 'GET') {
+          return new Response(renderInvoiceHtml(invoice), {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
+        }
+        if (!im[2] && method === 'GET') return json({ ok: true, invoice });
+        if (!im[2] && method === 'PATCH') {
+          const body = await readJson(request);
+          if (body.status !== undefined && !db.INVOICE_STATUSES.includes(body.status)) {
+            return json({ ok: false, error: 'Unknown status.' }, 422);
+          }
+          return json({ ok: true, invoice: await db.updateInvoice(env, invoice.id, body) });
+        }
+        if (!im[2] && method === 'DELETE') {
+          await db.deleteInvoice(env, invoice.id);
+          return json({ ok: true });
+        }
+      }
+
+      // Invoice agent: draft line-item DESCRIPTIONS from the booking. The
+      // model never sets an amount — pricing stays with the owner.
+      const ivd = pathname.match(/^\/api\/admin\/bookings\/(\d+)\/invoice-draft$/);
+      if (ivd && method === 'POST') {
+        const booking = await db.getBooking(env, Number(ivd[1]));
+        if (!booking) return json({ ok: false, error: 'Not found.' }, 404);
+        try {
+          return json({ ok: true, items: await draftInvoiceItems(env, booking) });
+        } catch (err) {
+          console.error(`Invoice draft failed for booking ${booking.id}:`, err);
+          const msg = String(err && err.message);
+          let error = 'Draft failed, try again.';
+          if (msg.includes('not set')) error = 'OpenRouter API key missing — add the OPENROUTER_API_KEY secret in Cloudflare and deploy.';
+          else if (msg.includes('OpenRouter 401')) error = 'OpenRouter rejected the API key — re-check its value in Cloudflare.';
+          else if (msg.includes('OpenRouter 402')) error = 'OpenRouter account has no credits — top up at openrouter.ai.';
+          return json({ ok: false, error }, 502);
+        }
       }
 
       // Drawer context: same-client history + same-date bookings.

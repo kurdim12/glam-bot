@@ -34,6 +34,9 @@ Telegram digest behind three secrets — and degrades gracefully without them.
     automatically (badges + drawer detail, no AI involved),
   - a per-booking **"Draft WhatsApp"** button generates a follow-up message in
     the lead's language — the owner reviews, edits, and sends it personally,
+  - **invoicing**: an Invoices tab + per-booking invoice editor on the brand
+    template (line items, tax, print-to-PDF); the agent drafts the line-item
+    *descriptions* from the booking — every price is typed by the owner,
   - a daily **8:00 AM (Amman) Telegram digest** of new + stale leads.
 
 ## Tech — runs two ways
@@ -111,6 +114,10 @@ cp .env.example .env
 | `DELETE` | `/api/admin/bookings/:id`       | admin | Delete                        |
 | `POST`   | `/api/admin/bookings/:id/draft` | admin | AI WhatsApp draft (Worker only) |
 | `GET`    | `/api/admin/bookings/:id/context` | admin | Client history + date clashes (Worker only) |
+| `GET/POST` | `/api/admin/invoices`         | admin | List / create invoices (Worker only) |
+| `GET/PATCH/DELETE` | `/api/admin/invoices/:id` | admin | One invoice (Worker only) |
+| `GET`    | `/api/admin/invoices/:id/print` | admin | Print-ready invoice page (Worker only) |
+| `POST`   | `/api/admin/bookings/:id/invoice-draft` | admin | AI line-item descriptions (Worker only) |
 | `GET`    | `/api/admin/export.csv`         | admin | Download all bookings as CSV  |
 
 ## Scale & performance
@@ -247,6 +254,19 @@ Two deterministic signals, computed from the data itself:
 - **⚠ date clash** — any shoot date shared by two or more active
   (non-cancelled) bookings is flagged on every affected row, and the drawer
   lists the other bookings on that date. Flexible dates never clash.
+
+### Invoicing (agent drafts descriptions, the owner sets every price)
+
+The **Invoices** tab (and an "Invoices" section in each booking's drawer)
+manages numbered invoices — `GB-<year>-0001` — on the GLAMBOT invoice
+template: client details, line items, tax %, notes, and a
+`draft → sent → paid` status. **⎙ Print / PDF** opens a print-ready page of
+the branded template; use the browser's Print → Save as PDF.
+
+The invoice agent (**✦ Draft items**, on invoices created from a booking)
+writes the line-item *descriptions* from the booking's occasion, date,
+location, and notes. It is forbidden from inventing prices — every amount is
+entered by the owner, and all totals are recomputed server-side.
 
 ### Daily stale-lead digest (Telegram, no LLM)
 

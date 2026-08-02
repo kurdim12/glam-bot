@@ -65,6 +65,7 @@
         <button class="vt active" data-view="table" type="button">▤ Table</button>
         <button class="vt" data-view="board" type="button">▦ Board</button>
         <button class="vt" data-view="pivot" type="button">⊞ Pivot</button>
+        <button class="vt" data-view="invoices" type="button">⎙ Invoices</button>
       </div>
       <span class="active-occ" id="active-occ" hidden></span>
       <span class="meta" id="result-count"></span>
@@ -105,7 +106,87 @@
       </div>
       <p class="pivot-hint">Tap an occasion to filter the bookings list.</p>
     </div>
+
+    <!-- INVOICES VIEW -->
+    <div class="view-invoices" id="view-invoices" hidden>
+      <div class="inv-head">
+        <span class="pivot-title">Invoices.</span>
+        <button type="button" class="btn btn-solid" id="inv-new">＋ New Invoice</button>
+      </div>
+      <div class="table-wrap">
+        <table class="bookings">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Client</th>
+              <th class="hide-sm">Date</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="inv-rows"></tbody>
+        </table>
+        <div class="state" id="inv-state" style="display:none;"></div>
+      </div>
+    </div>
   </main>
+
+  <!-- INVOICE EDITOR MODAL -->
+  <div class="inv-overlay" id="inv-overlay" hidden>
+    <div class="inv-modal" role="dialog" aria-modal="true" aria-labelledby="inv-title">
+      <div class="drawer-head">
+        <h3 id="inv-title">Invoice</h3>
+        <button class="drawer-close" id="inv-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="inv-body">
+        <div class="inv-grid">
+          <div>
+            <div class="detail-label">Client name</div>
+            <input class="notes-input inv-input" id="inv-client" maxlength="120" />
+          </div>
+          <div>
+            <div class="detail-label">Contact (phone / email)</div>
+            <input class="notes-input inv-input" id="inv-contact" maxlength="200" />
+          </div>
+          <div>
+            <div class="detail-label">Invoice date</div>
+            <input class="notes-input inv-input" id="inv-date" type="date" />
+          </div>
+          <div>
+            <div class="detail-label">Tax %</div>
+            <input class="notes-input inv-input" id="inv-tax" type="number" min="0" max="100" step="0.1" value="0" />
+          </div>
+        </div>
+        <div class="detail-label" style="margin-top:18px">Services / packages (amounts in JOD)</div>
+        <div id="inv-items"><!-- item rows rendered by JS --></div>
+        <div class="inv-item-actions">
+          <button type="button" class="btn" id="inv-add-item">＋ Add line</button>
+          <button type="button" class="btn" id="inv-draft-items" hidden>✦ Draft items</button>
+        </div>
+        <div class="inv-totals" id="inv-totals"><!-- rendered by JS --></div>
+        <div class="detail-label" style="margin-top:16px">Notes (payment terms, etc.)</div>
+        <textarea class="notes-input" id="inv-notes" rows="2" maxlength="1000"></textarea>
+        <div class="inv-status-row" id="inv-status-row" hidden>
+          <div class="detail-label">Status</div>
+          <select class="field-select-dark" id="inv-status">
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="draft-err" id="inv-err" hidden></div>
+      </div>
+      <div class="drawer-foot">
+        <button class="btn btn-danger" id="inv-delete" hidden>Delete</button>
+        <span class="save-hint" id="inv-hint"></span>
+        <div class="inv-foot-actions">
+          <button class="btn" id="inv-print" hidden>⎙ Print / PDF</button>
+          <button class="btn btn-solid" id="inv-save">Save Invoice</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- DETAIL DRAWER -->
   <div class="drawer-overlay" id="overlay"></div>
