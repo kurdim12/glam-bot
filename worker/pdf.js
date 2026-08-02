@@ -102,33 +102,49 @@ export function buildInvoicePdf(inv, { items, subtotal, tax, total }) {
   const cur = inv.currency || 'JOD';
   const money = (n) => n.toFixed(2);
 
-  // Header band
-  rect(0, 692, 612, 100, COL.black);
-  rect(L, 733, 12, 12, COL.orange); // brand mark
-  text(L + 20, 734, 'GLAMBOT', { size: 24, bold: true, color: COL.white, charSpace: 1.5 });
-  rightText(R, 734, 'INVOICE', { size: 22, bold: true, color: COL.orange, charSpace: 5 });
+  // Header: white page, dark wordmark left (text stand-in for the logo),
+  // big orange INVOICE right — per the official template.
+  rect(L, 742, 12, 12, COL.orange); // brand mark
+  text(L + 20, 743, 'GLAMBOT', { size: 24, bold: true, color: COL.black, charSpace: 1.5 });
+  rightText(R, 738, 'INVOICE', { size: 34, bold: true, color: COL.orange, charSpace: 4 });
 
-  // Meta
-  let y = 650;
-  text(L, y, 'BILLED TO', { size: 8, color: COL.grey, charSpace: 1.2 });
-  rightText(R, y, 'INVOICE NO.', { size: 8, color: COL.grey, charSpace: 1.2 });
-  text(L, y - 17, inv.client_name, { size: 12, bold: true });
-  rightText(R, y - 17, inv.number, { size: 12, bold: true });
-  if (inv.client_contact) text(L, y - 33, inv.client_contact, { size: 10, color: COL.grey });
-  rightText(R, y - 42, 'DATE', { size: 8, color: COL.grey, charSpace: 1.2 });
-  rightText(R, y - 57, String(inv.issued_at || ''), { size: 11 });
+  // Meta grid: Invoice No / Date / Payment Terms, then Invoice To / Event Date.
+  const C2 = 240; // column 2 x
+  const C3 = 360; // column 3 x
+  let y = 690;
+  text(L, y, 'INVOICE NO', { size: 8, bold: true, charSpace: 1.2 });
+  text(C2, y, 'DATE', { size: 8, bold: true, charSpace: 1.2 });
+  text(C3, y, 'PAYMENT TERMS', { size: 8, bold: true, charSpace: 1.2 });
+  text(L, y - 15, inv.number, { size: 11, bold: true });
+  text(C2, y - 15, String(inv.issued_at || ''), { size: 11 });
+  let ty = y - 15;
+  for (const line of wrap(inv.payment_terms || '—', R - C3, 10).slice(0, 3)) {
+    text(C3, ty, line, { size: 10, color: '0.267 0.267 0.267' });
+    ty -= 13;
+  }
+  y -= 52;
+  text(L, y, 'INVOICE TO', { size: 8, bold: true, charSpace: 1.2 });
+  text(C2, y, 'EVENT DATE', { size: 8, bold: true, charSpace: 1.2 });
+  text(L, y - 15, inv.client_name, { size: 11, bold: true });
+  text(C2, y - 15, inv.event_date || '—', { size: 11 });
+  if (inv.client_contact) text(L, y - 30, inv.client_contact, { size: 9.5, color: COL.grey });
 
-  // Items table
-  y = 545;
-  text(L, y, 'SERVICE OR PACKAGE', { size: 8, color: COL.grey, charSpace: 1.2 });
-  rightText(R, y, `AMOUNT (${cur})`, { size: 8, color: COL.grey, charSpace: 1.2 });
+  // Items table: No. | WHAT'S INCLUDED | AMOUNT IN JOD
+  const NCOL = L + 30; // description start (after the No. column)
+  y -= 62;
+  text(L, y, 'NO.', { size: 8, bold: true, charSpace: 1.2 });
+  text(NCOL, y, "WHAT'S INCLUDED", { size: 8, bold: true, charSpace: 1.2 });
+  rightText(R, y, `AMOUNT IN ${cur}`, { size: 8, bold: true, charSpace: 1.2 });
   rect(L, y - 8, R - L, 1.6, COL.orange);
   y -= 28;
+  let n = 0;
   for (const it of items) {
-    const lines = wrap(it.description, 380, 11);
+    n++;
+    const lines = wrap(it.description, 350, 11);
+    text(L, y, String(n), { size: 11, color: COL.grey });
     rightText(R, y, money(it.amount), { size: 11 });
     for (const line of lines) {
-      text(L, y, line, { size: 11 });
+      text(NCOL, y, line, { size: 11 });
       y -= 15;
     }
     y -= 3;
@@ -147,9 +163,9 @@ export function buildInvoicePdf(inv, { items, subtotal, tax, total }) {
   rightText(R, y, `${money(tax)} ${cur}`, { size: 11 });
   y -= 14;
   rect(tx, y, R - tx, 1.6, COL.black);
-  y -= 22;
-  text(tx, y, 'TOTAL', { size: 14, bold: true, charSpace: 1.5 });
-  rightText(R, y, `${money(total)} ${cur}`, { size: 14, bold: true, color: COL.orange });
+  y -= 26;
+  text(tx, y, 'TOTAL', { size: 16, bold: true, charSpace: 1.8 });
+  rightText(R, y, `${money(total)} ${cur}`, { size: 16, bold: true, color: COL.orange });
 
   // Notes
   if (inv.notes) {
@@ -166,14 +182,10 @@ export function buildInvoicePdf(inv, { items, subtotal, tax, total }) {
     }
   }
 
-  // Footer
+  // Footer — the template's real contact line, centered.
   rect(L, 78, R - L, 0.8, COL.hair);
-  text(L, 60, 'GLAMBOT', { size: 8, bold: true, color: COL.orange, charSpace: 0.8 });
-  text(L + textWidth('GLAMBOT', 8, true, 0.8) + 6, 60, '— cinematic robotic glam videos · Amman, Jordan', {
-    size: 8,
-    color: COL.grey,
-  });
-  rightText(R, 60, 'www.glambotjo.com · book@glambotjo.com', { size: 8, color: COL.grey });
+  const footTxt = 'book@glambotjo.com   ·   +962 79 094 4300   ·   @glambot_jo   ·   glambotjo.com';
+  text(306 - textWidth(footTxt, 8.5) / 2, 58, footTxt, { size: 8.5, color: COL.grey });
 
   return assemblePdf(ops.join('\n'));
 }
