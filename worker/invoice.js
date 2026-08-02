@@ -62,19 +62,25 @@ const escHtml = (s) =>
 
 const money = (n) => n.toFixed(2);
 
-/** Full print-ready HTML page for one invoice (all fields escaped). */
+/**
+ * Full print-ready HTML page for one invoice (all fields escaped).
+ * Layout mirrors the official GLAMBOT Word/PDF template: white page, dark
+ * logo top-left, big INVOICE title, meta grid (Invoice No / Date / Payment
+ * Terms, Invoice To / Event Date), numbered WHAT'S INCLUDED table, big TOTAL,
+ * and the real contact footer.
+ */
 export function renderInvoiceHtml(inv) {
   const { items, subtotal, tax, total } = computeTotals(inv.items, inv.tax_rate);
   const rows = items
     .map(
-      (it) => `
+      (it, i) => `
         <tr>
+          <td class="no">${i + 1}</td>
           <td class="desc">${escHtml(it.description)}</td>
           <td class="amt">${money(it.amount)}</td>
         </tr>`
     )
     .join('');
-  const issued = escHtml(inv.issued_at);
   const cur = escHtml(inv.currency || 'JOD');
 
   return `<!DOCTYPE html>
@@ -88,70 +94,75 @@ export function renderInvoiceHtml(inv) {
   @page { size: letter; margin: 0; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; background: #f2f2f0; }
-  .page { width: 8.5in; min-height: 11in; margin: 0 auto; background: #fff; display: flex; flex-direction: column; }
-  .head { background: #0d0d0d; color: #f5f5f3; padding: 0.55in 0.7in; display: flex; justify-content: space-between; align-items: center; }
-  .head img { height: 0.55in; }
-  .head .title { font-size: 30px; font-weight: 700; letter-spacing: 0.28em; color: #ff5c00; }
-  .body { padding: 0.5in 0.7in; flex: 1; }
-  .meta { display: flex; justify-content: space-between; gap: 24px; margin-bottom: 0.4in; }
-  .label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #888886; margin-bottom: 5px; }
-  .meta div p { font-size: 14px; line-height: 1.5; }
-  .meta .num { font-size: 15px; font-weight: 700; }
+  .page { width: 8.5in; min-height: 11in; margin: 0 auto; background: #fff; display: flex; flex-direction: column; padding: 0.6in 0.7in 0; }
+  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45in; }
+  .head img { height: 0.42in; }
+  .head .title { font-size: 44px; font-weight: 800; letter-spacing: 0.14em; color: #ff5c00; }
+  .label { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #111; font-weight: 700; margin-bottom: 4px; }
+  .val { font-size: 13px; color: #333; line-height: 1.45; }
+  .meta { display: grid; grid-template-columns: 1.1fr 0.9fr 1.4fr; gap: 10px 24px; margin-bottom: 0.4in; }
+  .meta .cell { padding: 4px 0; }
   table { width: 100%; border-collapse: collapse; }
-  thead th { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #888886; text-align: left; padding: 0 10px 8px; border-bottom: 2px solid #ff5c00; }
-  thead th.amt { text-align: right; }
-  tbody td { padding: 12px 10px; font-size: 14px; border-bottom: 1px solid #e5e5e2; }
-  td.amt { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .totals { margin: 0.25in 0 0 auto; width: 3.1in; }
-  .totals .row { display: flex; justify-content: space-between; padding: 7px 10px; font-size: 14px; }
-  .totals .row span:first-child { color: #888886; }
-  .totals .grand { border-top: 2px solid #0d0d0d; margin-top: 6px; padding-top: 12px; font-size: 18px; font-weight: 700; }
-  .totals .grand span:first-child { color: #0d0d0d; letter-spacing: 0.12em; text-transform: uppercase; }
-  .totals .grand span:last-child { color: #ff5c00; }
-  .notes { margin-top: 0.4in; }
-  .notes p { font-size: 13px; color: #444; line-height: 1.6; white-space: pre-line; }
-  .foot { padding: 0.3in 0.7in; border-top: 1px solid #e5e5e2; display: flex; justify-content: space-between; font-size: 11px; color: #888886; letter-spacing: 0.06em; }
-  .foot b { color: #ff5c00; font-weight: 600; }
+  thead th { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #111; font-weight: 700; text-align: left; padding: 0 10px 8px; border-bottom: 2px solid #ff5c00; }
+  th.amt, td.amt { text-align: right; }
+  th.no, td.no { width: 36px; color: #888886; }
+  tbody td { padding: 12px 10px; font-size: 13.5px; border-bottom: 1px solid #e5e5e2; }
+  td.amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .totals { margin: 0.22in 0 0 auto; width: 3.2in; }
+  .totals .row { display: flex; justify-content: space-between; padding: 6px 10px; font-size: 13.5px; }
+  .totals .row span:first-child { color: #555; }
+  .totals .grand { border-top: 2px solid #111; margin-top: 8px; padding-top: 14px; align-items: baseline; }
+  .totals .grand span:first-child { font-size: 20px; font-weight: 800; letter-spacing: 0.1em; color: #111; }
+  .totals .grand span:last-child { font-size: 22px; font-weight: 800; color: #ff5c00; }
+  .notes { margin-top: 0.35in; }
+  .notes p { font-size: 12.5px; color: #444; line-height: 1.6; white-space: pre-line; }
+  .foot { margin-top: auto; padding: 0.28in 0; border-top: 1px solid #e5e5e2; text-align: center; font-size: 11px; color: #888886; letter-spacing: 0.05em; }
   .toolbar { max-width: 8.5in; margin: 14px auto; display: flex; gap: 10px; justify-content: flex-end; }
   .toolbar button { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 22px; border: none; background: #ff5c00; color: #fff; cursor: pointer; }
-  @media print { body { background: #fff; } .toolbar { display: none; } .page { width: auto; min-height: auto; } }
+  @media print { body { background: #fff; } .toolbar { display: none; } .page { width: auto; min-height: 10.9in; } }
 </style>
 </head>
 <body>
   <div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div>
   <div class="page">
     <div class="head">
-      <img src="/assets/logo.png" alt="GLAMBOT" />
+      <img src="/assets/logo-dark.png" alt="GLAMBOT" />
       <div class="title">INVOICE</div>
     </div>
-    <div class="body">
-      <div class="meta">
-        <div>
-          <div class="label">Billed To</div>
-          <p><b>${escHtml(inv.client_name)}</b><br />${escHtml(inv.client_contact)}</p>
-        </div>
-        <div style="text-align:right">
-          <div class="label">Invoice No.</div>
-          <p class="num">${escHtml(inv.number)}</p>
-          <div class="label" style="margin-top:12px">Date</div>
-          <p>${issued}</p>
-        </div>
+    <div class="meta">
+      <div class="cell">
+        <div class="label">Invoice No</div>
+        <div class="val"><b>${escHtml(inv.number)}</b></div>
       </div>
-      <table>
-        <thead><tr><th>Service or Package</th><th class="amt">Amount (${cur})</th></tr></thead>
-        <tbody>${rows || '<tr><td class="desc" colspan="2" style="color:#888886">—</td></tr>'}</tbody>
-      </table>
-      <div class="totals">
-        <div class="row"><span>Subtotal</span><span>${money(subtotal)} ${cur}</span></div>
-        <div class="row"><span>Tax (${escHtml(String(inv.tax_rate))}%)</span><span>${money(tax)} ${cur}</span></div>
-        <div class="row grand"><span>Total</span><span>${money(total)} ${cur}</span></div>
+      <div class="cell">
+        <div class="label">Date</div>
+        <div class="val">${escHtml(inv.issued_at)}</div>
       </div>
-      ${inv.notes ? `<div class="notes"><div class="label">Notes</div><p>${escHtml(inv.notes)}</p></div>` : ''}
+      <div class="cell">
+        <div class="label">Payment Terms</div>
+        <div class="val">${escHtml(inv.payment_terms) || '—'}</div>
+      </div>
+      <div class="cell">
+        <div class="label">Invoice To</div>
+        <div class="val"><b>${escHtml(inv.client_name)}</b>${inv.client_contact ? `<br />${escHtml(inv.client_contact)}` : ''}</div>
+      </div>
+      <div class="cell">
+        <div class="label">Event Date</div>
+        <div class="val">${escHtml(inv.event_date) || '—'}</div>
+      </div>
+      <div class="cell"></div>
     </div>
-    <div class="foot">
-      <span><b>GLAMBOT</b> — cinematic robotic glam videos · Amman, Jordan</span>
-      <span>www.glambotjo.com · book@glambotjo.com</span>
+    <table>
+      <thead><tr><th class="no">No.</th><th>What's Included</th><th class="amt">Amount in ${cur}</th></tr></thead>
+      <tbody>${rows || '<tr><td class="no">—</td><td class="desc" style="color:#888886">—</td><td class="amt">—</td></tr>'}</tbody>
+    </table>
+    <div class="totals">
+      <div class="row"><span>Subtotal</span><span>${money(subtotal)} ${cur}</span></div>
+      <div class="row"><span>Tax (${escHtml(String(inv.tax_rate))}%)</span><span>${money(tax)} ${cur}</span></div>
+      <div class="row grand"><span>TOTAL</span><span>${money(total)} ${cur}</span></div>
     </div>
+    ${inv.notes ? `<div class="notes"><div class="label">Notes</div><p>${escHtml(inv.notes)}</p></div>` : ''}
+    <div class="foot">book@glambotjo.com&nbsp;&nbsp;·&nbsp;&nbsp;+962 79 094 4300&nbsp;&nbsp;·&nbsp;&nbsp;@glambot_jo&nbsp;&nbsp;·&nbsp;&nbsp;glambotjo.com</div>
   </div>
 </body>
 </html>`;

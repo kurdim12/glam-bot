@@ -53,6 +53,22 @@ export async function ensureSchema(env) {
     env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_invoices_created ON invoices(created_at)'),
   ]);
 
+  // Invoice columns added after the first release — same PRAGMA-diff pattern.
+  const invInfo = await env.DB.prepare('PRAGMA table_info(invoices)').all();
+  const invHave = new Set((invInfo.results || []).map((c) => c.name));
+  for (const [name, type] of [
+    ['payment_terms', 'TEXT'], // template meta field, e.g. "50% deposit to confirm"
+    ['event_date', 'TEXT'], // the shoot date the invoice covers
+  ]) {
+    if (!invHave.has(name)) {
+      try {
+        await env.DB.prepare(`ALTER TABLE invoices ADD COLUMN ${name} ${type}`).run();
+      } catch (err) {
+        if (!/duplicate column/i.test(String(err) + String(err?.cause || ''))) throw err;
+      }
+    }
+  }
+
   const info = await env.DB.prepare('PRAGMA table_info(bookings)').all();
   const have = new Set((info.results || []).map((c) => c.name));
   const wanted = [
@@ -254,8 +270,8 @@ export async function createInvoice(env, inv) {
     const number = await nextInvoiceNumber(env);
     try {
       const res = await env.DB.prepare(
-        `INSERT INTO invoices (number, booking_id, client_name, client_contact, items, tax_rate, currency, notes, status, issued_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'JOD', ?, 'draft', ?, ?, ?)`
+        `INSERT INTO invoices (number, booking_id, client_name, client_contact, items, tax_rate, currency, notes, payment_terms, event_date, status, issued_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'JOD', ?, ?, ?, 'draft', ?, ?, ?)`
       )
         .bind(
           number,
@@ -265,6 +281,8 @@ export async function createInvoice(env, inv) {
           items,
           Math.min(Math.max(Number(inv.tax_rate) || 0, 0), 100),
           String(inv.notes || '').slice(0, 1000),
+          String(inv.payment_terms || '').slice(0, 200),
+          String(inv.event_date || '').slice(0, 40),
           inv.issued_at || now.slice(0, 10),
           now,
           now
@@ -306,12 +324,15 @@ export async function updateInvoice(env, id, patch) {
     tax_rate:
       patch.tax_rate !== undefined ? Math.min(Math.max(Number(patch.tax_rate) || 0, 0), 100) : existing.tax_rate,
     notes: patch.notes !== undefined ? String(patch.notes).slice(0, 1000) : existing.notes,
+    payment_terms:
+      patch.payment_terms !== undefined ? String(patch.payment_terms).slice(0, 200) : existing.payment_terms,
+    event_date: patch.event_date !== undefined ? String(patch.event_date).slice(0, 40) : existing.event_date,
     status:
       patch.status !== undefined && INVOICE_STATUSES.includes(patch.status) ? patch.status : existing.status,
     issued_at: patch.issued_at !== undefined ? String(patch.issued_at).slice(0, 10) : existing.issued_at,
   };
   await env.DB.prepare(
-    `UPDATE invoices SET client_name = ?, client_contact = ?, items = ?, tax_rate = ?, notes = ?, status = ?, issued_at = ?, updated_at = ?
+    `UPDATE invoices SET client_name = ?, client_contact = ?, items = ?, tax_rate = ?, notes = ?, payment_terms = ?, event_date = ?, status = ?, issued_at = ?, updated_at = ?
      WHERE id = ?`
   )
     .bind(
@@ -320,6 +341,8 @@ export async function updateInvoice(env, id, patch) {
       next.items,
       next.tax_rate,
       next.notes,
+      next.payment_terms,
+      next.event_date,
       next.status,
       next.issued_at,
       new Date().toISOString(),

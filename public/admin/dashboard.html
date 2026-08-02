@@ -157,6 +157,14 @@
             <div class="detail-label">Tax %</div>
             <input class="notes-input inv-input" id="inv-tax" type="number" min="0" max="100" step="0.1" value="0" />
           </div>
+          <div>
+            <div class="detail-label">Event date</div>
+            <input class="notes-input inv-input" id="inv-event" maxlength="40" placeholder="e.g. Aug 20, 2026" />
+          </div>
+          <div>
+            <div class="detail-label">Payment terms</div>
+            <input class="notes-input inv-input" id="inv-terms" maxlength="200" placeholder="e.g. 50% deposit to confirm" />
+          </div>
         </div>
         <div class="detail-label" style="margin-top:18px">Services / packages (amounts in JOD)</div>
         <div id="inv-items"><!-- item rows rendered by JS --></div>

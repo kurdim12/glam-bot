@@ -440,6 +440,7 @@ async function openDrawer(id) {
       client_name: b.name,
       client_contact: [b.phone_e164 || b.phone, b.email].filter(Boolean).join(' · '),
       lang: b.lang,
+      event_date: b.shoot_date && b.shoot_date !== 'Flexible' ? b.shoot_date : '',
     })
   );
   loadContext(id); // best-effort, fills #d-context when it lands
@@ -984,6 +985,8 @@ function openInvoiceModal(inv, prefill) {
   document.getElementById('inv-contact').value = inv ? inv.client_contact : (prefill && prefill.client_contact) || '';
   document.getElementById('inv-date').value = inv ? inv.issued_at : new Date().toISOString().slice(0, 10);
   document.getElementById('inv-tax').value = inv ? inv.tax_rate : 0;
+  document.getElementById('inv-event').value = inv ? inv.event_date || '' : (prefill && prefill.event_date) || '';
+  document.getElementById('inv-terms').value = inv ? inv.payment_terms || '' : '';
   document.getElementById('inv-notes').value = inv ? inv.notes : '';
   document.getElementById('inv-hint').textContent = '';
   document.getElementById('inv-err').hidden = true;
@@ -1022,6 +1025,8 @@ async function saveInvoice() {
     client_contact: document.getElementById('inv-contact').value.trim(),
     issued_at: document.getElementById('inv-date').value,
     tax_rate: Number(document.getElementById('inv-tax').value) || 0,
+    event_date: document.getElementById('inv-event').value.trim(),
+    payment_terms: document.getElementById('inv-terms').value.trim(),
     items: invCollectItems(),
     notes: document.getElementById('inv-notes').value,
   };
