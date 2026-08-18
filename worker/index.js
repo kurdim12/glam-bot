@@ -34,6 +34,68 @@ async function readJson(request) {
   }
 }
 
+
+// ─── Media: byte-range support ───────────────────────────────────────────────
+// The ASSETS binding serves files whole and never answers a Range request with
+// 206. iOS Safari probes video with `Range: bytes=0-1` and refuses to play at
+// all if it doesn't get partial content back — so video worked on Android and
+// died on iPhone. Everything under /media/ is served through here instead.
+const MEDIA_CACHE = 'public, max-age=31536000, immutable';
+
+async function serveMedia(request, env) {
+  const asset = await env.ASSETS.fetch(
+    new Request(new URL(request.url).toString(), { method: 'GET' })
+  );
+  if (!asset.ok) return asset;
+
+  const body = await asset.arrayBuffer();
+  const size = body.byteLength;
+  const head = {
+    'Content-Type': asset.headers.get('Content-Type') || 'application/octet-stream',
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': MEDIA_CACHE,
+  };
+  const isHead = request.method === 'HEAD';
+  const range = request.headers.get('Range');
+
+  if (!range) {
+    return new Response(isHead ? null : body, {
+      status: 200,
+      headers: { ...head, 'Content-Length': String(size) },
+    });
+  }
+
+  const unsatisfiable = () =>
+    new Response(null, { status: 416, headers: { ...head, 'Content-Range': `bytes */${size}` } });
+
+  const m = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
+  if (!m || (m[1] === '' && m[2] === '')) return unsatisfiable();
+
+  let start, end;
+  if (m[1] === '') {                       // suffix form: last N bytes
+    const n = Number(m[2]);
+    if (!Number.isFinite(n) || n <= 0) return unsatisfiable();
+    start = Math.max(0, size - n);
+    end = size - 1;
+  } else {
+    start = Number(m[1]);
+    end = m[2] === '' ? size - 1 : Number(m[2]);
+  }
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start >= size || end < start) {
+    return unsatisfiable();
+  }
+  end = Math.min(end, size - 1);
+
+  return new Response(isHead ? null : body.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      ...head,
+      'Content-Length': String(end - start + 1),
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+    },
+  });
+}
+
 // Serve an asset file by its clean URL (html_handling resolves *.html).
 function serveAsset(env, origin, pathname) {
   return env.ASSETS.fetch(new Request(new URL(pathname, origin), { method: 'GET' }));
@@ -62,6 +124,11 @@ async function buildCsv(env) {
 
 export default {
   async fetch(request, env, ctx) {
+    // Video must be range-served (see serveMedia) or iOS Safari won't play it.
+    if (new URL(request.url).pathname.startsWith('/media/')) {
+      return serveMedia(request, env);
+    }
+
     const url = new URL(request.url);
     const { pathname, origin } = url;
     const method = request.method;

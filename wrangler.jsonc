@@ -15,7 +15,9 @@
     // Unknown paths fall back to the booking form.
     "not_found_handling": "single-page-application",
     // Only run the Worker for these routes; everything else is a direct asset.
-    "run_worker_first": ["/api/*", "/admin", "/admin/*"]
+    // /media/* goes through the Worker so video gets real byte-range replies —
+    // the ASSETS binding always returns 200, which iOS Safari rejects.
+    "run_worker_first": ["/api/*", "/admin", "/admin/*", "/media/*"]
   },
 
   "d1_databases": [

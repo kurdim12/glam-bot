@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=44">
+<link rel="stylesheet" href="assets/styles.css?v=45">
 
 <!-- SCHEMA -->
 <script type="application/ld+json">
@@ -139,7 +139,7 @@
       "name": "GLAMBOT Jordan showreel",
       "description": "The GLAMBOT robotic camera arm filming at events and shoots across Jordan.",
       "thumbnailUrl": "https://glambotjo.com/assets/hero-glam-poster.jpg",
-      "contentUrl": "https://glambotjo.com/assets/hero-glam.mp4",
+      "contentUrl": "https://glambotjo.com/media/hero-glam.mp4",
       "uploadDate": "2026-08-18",
       "duration": "PT30S"
     },
@@ -244,10 +244,13 @@
 <section class="hero" id="top">
   <div class="hero__bg"></div>
   <video class="hero__video" id="heroReel" poster="assets/hero-glam-poster.jpg"
-         autoplay muted loop playsinline preload="auto"
+         autoplay muted loop playsinline preload="metadata"
          aria-label="GLAMBOT showreel">
-    <source src="assets/hero-glam.mp4" type="video/mp4">
-    <source src="assets/hero-glam.webm" type="video/webm">
+    <!-- Phones get a 960p cut (2.6 MB, not 15 MB). First matching source wins. -->
+    <source src="media/hero-glam-mobile.mp4"  type="video/mp4"  media="(max-width: 820px)">
+    <source src="media/hero-glam-mobile.webm" type="video/webm" media="(max-width: 820px)">
+    <source src="media/hero-glam.mp4"  type="video/mp4">
+    <source src="media/hero-glam.webm" type="video/webm">
   </video>
   <h1 class="sr-only">GLAMBOT Jordan — Cinematic Robotic Arm</h1>
   <a class="btn-ghost hero__cta" href="#book">Book Now</a>
@@ -365,8 +368,8 @@
         <img id="workMain" src="assets/portfolio-main.jpg" alt="" width="1110" height="794" hidden>
         <video id="workVideo" poster="assets/hero-video-poster.jpg" autoplay muted loop playsinline controls preload="auto"
                aria-label="Jordan Create event showreel">
-          <source src="assets/hero-video.mp4" type="video/mp4">
-          <source src="assets/hero-video.webm" type="video/webm">
+          <source src="media/hero-video.mp4" type="video/mp4">
+          <source src="media/hero-video.webm" type="video/webm">
         </video>
         <figcaption id="workCaption"></figcaption>
       </figure>
@@ -701,6 +704,6 @@
   </div>
 </footer>
 
-<script src="assets/app.js?v=44"></script>
+<script src="assets/app.js?v=45"></script>
 </body>
 </html>
