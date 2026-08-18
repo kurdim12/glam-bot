@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+
+  <!-- Home — the whole marketing site. Everything else is legal copy. -->
+  <url>
+    <loc>https://glambotjo.com/</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://glambotjo.com/assets/og-image.jpg</image:loc>
+      <image:title>GLAMBOT Jordan — cinematic robotic camera arm</image:title>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://glambotjo.com/assets/hero-glam-poster.jpg</video:thumbnail_loc>
+      <video:title>GLAMBOT Jordan showreel</video:title>
+      <video:description>The GLAMBOT robotic camera arm filming at events and shoots across Jordan.</video:description>
+      <video:content_loc>https://glambotjo.com/assets/hero-glam.mp4</video:content_loc>
+      <video:duration>30</video:duration>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+
+  <url>
+    <loc>https://glambotjo.com/booking-policy</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://glambotjo.com/safety</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://glambotjo.com/privacy</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://glambotjo.com/terms</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+</urlset>

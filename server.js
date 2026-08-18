@@ -152,10 +152,22 @@ app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'admin', 'dashboard.html'));
 });
 
+// ─── Canonical URLs ──────────────────────────────────────────────────────────
+// The gated /admin routes above serve the dashboard only to an authed session.
+// Block the raw .html twins so the shell can't simply be fetched directly.
+app.get(/^\/admin\/.+\.html$/, (req, res) => res.redirect(302, '/admin'));
+
+// One canonical address per page: /privacy — never /privacy.html — so search
+// engines don't index the same document twice. 301 keeps any existing links.
+app.get(/^\/(.+)\.html$/, (req, res) => {
+  const slug = req.params[0];
+  res.redirect(301, slug === 'index' ? '/' : `/${slug}`);
+});
+
 // ─── Static site ──────────────────────────────────────────────────────────────
-// Mounted after the routes above (no `extensions: ['html']`) so the form, CSS,
-// JS, and images are served directly while the gated /admin URLs keep priority.
-app.use(express.static(PUBLIC_DIR));
+// Mounted after the routes above, so the gated /admin URLs keep priority.
+// `extensions: ['html']` resolves the clean URLs above to their .html files.
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
 // ─── Fallbacks ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

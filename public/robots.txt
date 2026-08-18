@@ -1,0 +1,11 @@
+# GLAMBOT Jordan — https://glambotjo.com
+
+User-agent: *
+Allow: /
+
+# Private surfaces — no crawl value, and the admin area is password-gated.
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://glambotjo.com/sitemap.xml
