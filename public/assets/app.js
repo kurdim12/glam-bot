@@ -315,7 +315,26 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
       sg.classList.toggle('is-on',   k === i);
       sg.setAttribute('aria-current', k === i ? 'true' : 'false');
     });
+
+    centreActive();
   };
+
+  /* On a phone the 7-step strip is wider than the screen, so the active step
+     can sit off-frame — which reads as "stuck". Keep it centred. Scrolls the
+     strip only, never the page. */
+  const timeline = $('#hiwTimeline');
+  function centreActive() {
+    if (!timeline || timeline.scrollWidth <= timeline.clientWidth + 1) return;
+    const item = segs[i].closest('li') || segs[i];
+    const strip = timeline.getBoundingClientRect();
+    const box   = item.getBoundingClientRect();
+    const delta = (box.left - strip.left) - (strip.width - box.width) / 2;
+    if (Math.abs(delta) < 2) return;
+    timeline.scrollBy({
+      left: delta,
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
+  }
 
   segs.forEach(sg => sg.addEventListener('click', () => paint(+sg.dataset.i)));
   $('#hiwPrev').addEventListener('click', () => paint(i - 1));

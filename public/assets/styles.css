@@ -681,7 +681,22 @@ ul,ol{padding:0;list-style:none}
 
   .hiw__player{grid-template-columns:1fr}
   .hiw__stage{aspect-ratio:16/10}
-  .hiw__timeline{grid-template-columns:repeat(7,minmax(86px,1fr));overflow-x:auto;padding-bottom:6px}
+  /* Seven steps never fit a phone. Make the strip swipeable, snap it, and
+     keep the active step scrolled into view (app.js) so it can't look stuck. */
+  .hiw__timeline{
+    display:flex;gap:10px;
+    overflow-x:auto;overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;scroll-padding-inline:24px;
+    padding-bottom:10px;scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .hiw__timeline::-webkit-scrollbar{display:none}
+  .hiw__timeline>li{flex:0 0 auto}
+  .hiw__seg{width:120px;scroll-snap-align:center;padding-block:10px}
+  .hiw__seglabel{font-size:13px;margin-top:9px}
+  /* the step you're on has to be unmistakable at a glance */
+  .hiw__seg.is-on .hiw__seglabel{color:var(--orange);font-weight:700}
+  .hiw__seg.is-on .hiw__segbar{height:5px;box-shadow:0 0 10px rgba(255,75,0,.55)}
+  .hiw__seg.is-done .hiw__seglabel{color:rgba(255,255,255,.72)}
 
   .foot__top{grid-template-columns:1fr 1fr;gap:clamp(28px,3.300vw,56px)}
   .foot__brand{grid-column:1/-1;padding-right:0;
