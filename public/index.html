@@ -1,190 +1,514 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>GLAMBOT — Booking Inquiry</title>
-  <meta name="description" content="Reserve the Glambot. Cinematic robotic camera arm for weddings, galas, corporate events, and brand activations in Jordan and the MENA region." />
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-
-  <!-- Futura/Proxima Nova stand-ins (Jost + Inter). See css/brand.css to swap in an Adobe Fonts kit. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="/css/brand.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GLAMBOT Jordan — Cinematic Robotic Arm</title>
+<meta name="description" content="GlamBot JO creates cinematic robotic camera experiences for weddings, events, brand activations, and advertising in Amman, Jordan.">
+<meta name="theme-color" content="#0C0C0C">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 640'%3E%3Cpath fill='%23fff' d='M0 160h161v320H0zM161 0h162l161 160H161zM161 480h276v160H161zM437 320v160l162 160h161z'/%3E%3Cpath fill='%23FF4B00' d='M484 160 622 23v274z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=43">
 </head>
 <body>
 
-  <!-- CINEMATIC BOOT (once per session) -->
-  <div class="boot" id="boot" aria-hidden="true">
-    <div class="boot-core">
-      <svg class="boot-lens" viewBox="0 0 120 120" aria-hidden="true">
-        <circle class="boot-ring" cx="60" cy="60" r="54" />
-        <circle class="boot-ring-2" cx="60" cy="60" r="44" />
-        <path class="boot-arc" d="M60 6 A54 54 0 0 1 114 60" />
-      </svg>
-      <img class="boot-logo" src="/assets/logo.png" alt="GLAMBOT" />
-      <div class="boot-readout">
-        <span class="boot-tc" id="boot-tc">00:00:00:00</span>
-        <span class="boot-status">Calibrating Arm</span>
-      </div>
-      <div class="boot-bar"><i></i></div>
-    </div>
+<a class="skip" href="#about">Skip to content</a>
+
+<!-- ============================ NAV ============================ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a class="nav__logo" href="#top" aria-label="GLAMBOT Jordan — home">
+      <svg class="nav__lockup" viewBox="7.0 -2.5 332.5 60.0" role="img" aria-label="GLAMBOT"><g transform="rotate(-8.049)"><path d="M78.4204 39.5792C80.0841 27.8144 89.7452 20.5933 101.406 22.2424C108.66 23.2681 114.293 27.6845 117.056 34.4914L109.787 36.8764C108.121 32.5542 104.785 29.8056 100.476 29.1963C93.4257 28.1994 87.7622 32.7798 86.6291 40.7928C85.582 48.1971 89.8576 54.1786 96.9553 55.1823C102.585 55.9784 107.268 53.2277 108.527 48.3372L98.4377 46.9104L99.3199 40.6718L117.729 43.2751C116.711 55.959 107.634 63.4696 95.4588 61.7479C84.1516 60.149 76.8355 50.787 78.4204 39.5792Z" fill="#FFFFFF"/><path d="M125.007 26.2529L132.765 27.35L128.305 58.8927L139.564 60.4849L138.617 67.1811L119.599 64.4918L125.007 26.2529Z" fill="#FFFFFF"/><path d="M164.257 31.0815L169.226 31.7842L179.744 72.9974L171.632 71.8502L169.608 63.4963L154.242 61.3235L149.778 68.7597L141.868 67.6412L164.261 31.0821L164.257 31.0815ZM168.025 56.7507L164.848 43.3722L164.745 43.3575L157.728 55.2946L168.021 56.75L168.025 56.7507Z" fill="#FFFFFF"/><path d="M196.46 35.6357L200.971 36.2737L208.268 62.9615L208.419 62.9829L222.727 39.3501L227.394 40.0101L229.342 80.0114L221.433 78.8929L220.828 55.7364L220.684 55.6632L207.499 77.5918L205.064 77.2475L198.41 52.6147L198.251 52.6451L191.315 74.6296L183.656 73.5465L196.465 35.632L196.46 35.6357Z" fill="#FFFFFF"/><path d="M239.974 42.5107L251.687 44.1671C258.888 45.1855 262.77 49.5612 261.916 55.5969C261.371 59.4523 259.5 61.7198 256.551 62.8044L256.529 62.9555C261.247 64.3449 263.845 68.6447 263.128 73.7176C262.188 80.3621 256.52 83.8541 248.46 82.7143L234.566 80.7496L239.974 42.5107ZM248.84 59.9041C251.884 60.3346 254.075 58.7288 254.498 55.7369C254.879 53.0472 253.317 50.9152 250.429 50.5067L246.828 49.9976L245.494 59.431L248.84 59.9041ZM248.077 76.2968C252.083 76.8634 254.477 75.2863 254.972 71.7892C255.409 68.698 253.35 66.4385 249.953 65.958L244.677 65.2119L243.207 75.6081L248.077 76.2968Z" fill="#FFFFFF"/><path d="M266.326 65.8957C267.975 54.2302 278.12 47.2361 289.681 48.8711C301.243 50.506 308.956 59.6159 307.271 71.5318C305.586 83.4477 295.598 90.0544 284.14 88.434C272.021 86.7203 264.719 77.2547 266.326 65.8957ZM299.027 70.5685C300.096 63.0132 295.431 57.232 288.635 56.271C281.231 55.224 275.517 60.1584 274.521 67.2043C273.524 74.2503 277.762 80.1295 285.166 81.1765C292.061 82.1515 298.095 77.1612 299.027 70.5685Z" fill="#FFFFFF"/><path d="M317.257 60.2701L308.89 59.0868L309.837 52.3906L334.282 55.8474L333.335 62.5436L325.02 61.3678L320.559 92.9104L312.801 91.8133L317.262 60.2707L317.257 60.2701Z" fill="#FFFFFF"/><path d="M59.6494 34.4273L49.1145 20.4223L63.1196 9.88746L59.6494 34.4273Z" fill="#FF4B00"/><path d="M49.1144 20.4232L20.4255 16.3663L22.4531 2.02832L36.804 4.0577L49.1144 20.4232Z" fill="#FFFFFF"/><path d="M20.4212 16.3654L6.08322 14.3379L2.02751 43.0181L16.3654 45.0457L20.4212 16.3654Z" fill="#FFFFFF"/><path d="M40.9184 48.5173L16.3698 45.0459L14.3423 59.3839L38.8908 62.8553L40.9184 48.5173Z" fill="#FFFFFF"/><path d="M67.5667 66.9111L53.2287 64.8835L40.9183 48.518L42.9465 34.1758L67.5667 66.9111Z" fill="#FFFFFF"/></g></svg>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="#about">About us</a>
+      <a href="#work">Our work</a>
+      <a href="#included">Services</a>
+      <a href="#packages">Packages</a>
+    </nav>
+
+    <a class="btn-ghost nav__cta" href="#book">Book Now</a>
+
+    <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 
-  <!-- TOP NAV -->
-  <header class="topbar">
-    <a href="/" class="topbar-link"><img class="topbar-logo" src="/assets/logo.png" alt="GLAMBOT" /></a>
-    <a href="#inquiry" class="meta meta-orange topbar-link">[ BOOK NOW ]</a>
-  </header>
+  <div class="nav__mobile" id="mobileMenu" hidden>
+    <a href="#about">About us</a>
+    <a href="#audience">Our Audience</a>
+    <a href="#work">Our work</a>
+    <a href="#included">Services</a>
+    <a href="#process">How It Works</a>
+    <a href="#packages">Packages</a>
+    <a class="nav__mobile-cta" href="#book">Book Now</a>
+  </div>
+</header>
 
-  <!-- HERO -->
-  <section class="hero" id="hero">
-    <div class="hero-fx" aria-hidden="true">
-      <div class="hero-rays"></div>
-      <canvas class="hero-particles" id="hero-particles"></canvas>
-      <div class="hero-spot" id="hero-spot"></div>
+<!-- ============================ HERO ============================ -->
+<section class="hero" id="top">
+  <div class="hero__bg"></div>
+  <video class="hero__video" id="heroReel" poster="assets/hero-glam-poster.jpg"
+         autoplay muted loop playsinline preload="auto"
+         aria-label="GLAMBOT showreel">
+    <source src="assets/hero-glam.mp4" type="video/mp4">
+    <source src="assets/hero-glam.webm" type="video/webm">
+  </video>
+  <h1 class="sr-only">GLAMBOT Jordan — Cinematic Robotic Arm</h1>
+  <a class="btn-ghost hero__cta" href="#book">Book Now</a>
+</section>
+
+<!-- ============================ ABOUT ============================ -->
+<section class="sec" id="about">
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#about">About us</a></div>
+
+    <h2 class="h-lg about__head reveal">Glambot creates cinematic videos<br>using a precision robotic camera arm.</h2>
+    <div class="about__body reveal">
+      <p>We bring a polished, high-energy experience to events and brand productions, capturing<br>memorable moments from striking angles and delivering content made to be shared.</p>
+      <p>From setup and filming to editing and delivery, our team handles the full experience.</p>
     </div>
+  </div>
+</section>
 
-    <div class="hero-top">
-      <div class="hero-meta-row">
-        <span class="meta meta-orange">[ BOOKING INQUIRY / 2026 ]</span>
+<!-- ============================ AUDIENCE ============================ -->
+<section class="sec" id="audience">
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#audience">Our Audience</a></div>
+    <h2 class="h-lg reveal">Who We Work With</h2>
+  </div>
+
+  <div class="aud">
+    <div class="wrap aud__wrap">
+      <ul class="aud__list" role="list">
+        <li>
+          <button class="aud__item is-active" data-img="assets/audience.jpg" data-occasion="Gala" aria-pressed="true">
+            <span class="aud__num">01</span>
+            <span class="aud__txt">
+              <span class="aud__title">Galas &amp; Red-carpets</span>
+              <span class="aud__desc">Make every guest feel<br>like the main character</span>
+              <span class="aud__go">Book this <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button class="aud__item" data-img="assets/hero-video-poster.jpg" data-occasion="Brand Activation" aria-pressed="false">
+            <span class="aud__num">02</span>
+            <span class="aud__txt">
+              <span class="aud__title">Brand Activations</span>
+              <span class="aud__desc">For campaign and<br>advertising</span>
+              <span class="aud__go">Book this <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button class="aud__item" data-img="assets/portfolio-2.jpg" data-occasion="Wedding" aria-pressed="false">
+            <span class="aud__num">03</span>
+            <span class="aud__txt">
+              <span class="aud__title">Wedding Planners</span>
+              <span class="aud__desc">Be the planner who<br>thought of everything.</span>
+              <span class="aud__go">Book this <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button class="aud__item" data-img="assets/portfolio-main.jpg" data-occasion="Corporate Event" aria-pressed="false">
+            <span class="aud__num">04</span>
+            <span class="aud__txt">
+              <span class="aud__title">Corporate Events</span>
+              <span class="aud__desc">The event investment<br>that keeps paying off.</span>
+              <span class="aud__go">Book this <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button class="aud__item" data-img="assets/portfolio-3.jpg" data-occasion="Product Shoot" aria-pressed="false">
+            <span class="aud__num">05</span>
+            <span class="aud__txt">
+              <span class="aud__title">Product Shoots</span>
+              <span class="aud__desc">Hero shots for products<br>that deserve motion.</span>
+              <span class="aud__go">Book this <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+            </span>
+          </button>
+        </li>
+      </ul>
+
+      <div class="aud__media" aria-hidden="true">
+        <img id="audImg" src="assets/audience.jpg" alt="" width="1080" height="1080">
+        <span class="aud__slat" style="left:31.077%"></span>
+        <span class="aud__slat" style="left:65.538%"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ WORK ============================ -->
+<section class="sec" id="work">
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#work">Our Work</a></div>
+
+    <div class="work">
+      <div class="work__left">
+        <h2 class="h-lg">Portfolio</h2>
+        <p class="quote">Our work spans leading<br>companies, events, and industries<br>across Jordan, creating cinematic<br>experiences built to stand out.</p>
+
+        <div class="work__rail">
+          <span class="work__marker" id="workMarker" aria-hidden="true"></span>
+          <button class="work__thumb work__thumb--logo is-active" data-video="1" aria-label="Play: Jordan Create event showreel" aria-pressed="true">
+            <img src="assets/jordan-create.png" alt="" width="146" height="148">
+          </button>
+          <button class="work__thumb" data-src="assets/portfolio-2.jpg" data-caption="Red carpet activation — Amman" aria-label="Show: Red carpet activation, Amman" aria-pressed="false">
+            <img src="assets/portfolio-2.jpg" alt="" width="146" height="148">
+          </button>
+          <button class="work__thumb" data-src="assets/portfolio-3.jpg" data-caption="Product film — energy drink" aria-label="Show: Product film, energy drink" aria-pressed="false">
+            <img src="assets/portfolio-3.jpg" alt="" width="146" height="148">
+          </button>
+        </div>
       </div>
 
-      <h1 class="hero-title">
-        Reserve<br />
-        the <span class="accent">machine.</span>
-      </h1>
-
-      <p class="hero-subhead">
-        Tell us what you're shooting. We'll be in touch by phone to confirm the date, the
-        location, and the shot.
-      </p>
+      <figure class="work__stage">
+        <img id="workMain" src="assets/portfolio-main.jpg" alt="" width="1110" height="794" hidden>
+        <video id="workVideo" poster="assets/hero-video-poster.jpg" autoplay muted loop playsinline controls preload="auto"
+               aria-label="Jordan Create event showreel">
+          <source src="assets/hero-video.mp4" type="video/mp4">
+          <source src="assets/hero-video.webm" type="video/webm">
+        </video>
+        <figcaption id="workCaption"></figcaption>
+      </figure>
     </div>
+  </div>
+</section>
 
-    <div class="hero-footer">
-      <a href="#inquiry" class="scroll-cue">
-        <span class="scroll-cue-line"></span>
-        <span class="scroll-cue-label">Begin Inquiry</span>
-      </a>
-      <span class="meta">[ ARM: READY ]</span>
+<!-- ============================ INCLUDED / SERVICES ============================ -->
+<section class="sec" id="included">
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#included">Who we Work with</a></div>
+    <h2 class="h-lg reveal">What&rsquo;s Included</h2>
+
+    <div class="inc">
+      <button type="button" class="inc__card is-active" aria-pressed="true">
+        <span class="inc__head"><i class="tick"></i>For Events</span>
+        <ul class="inc__list" id="panel-events" role="list">
+          <li>Dedicated operator for your entire event coverage.</li>
+          <li>Slow-motion clips filmed for every guest at events.</li>
+          <li>Instant delivery lets guests share clips on-site.</li>
+          <li>Multiple takes included for every event guest.</li>
+        </ul>
+      </button>
+
+      <button type="button" class="inc__card" aria-pressed="false">
+        <span class="inc__head"><i class="tick"></i>For Brands</span>
+        <ul class="inc__list" id="panel-brands" role="list">
+          <li>Dedicated operator for your entire event coverage.</li>
+          <li>Slow-motion clips filmed for every guest at events.</li>
+          <li>Instant delivery lets guests share clips on-site.</li>
+          <li>Multiple takes included for every event guest.</li>
+        </ul>
+      </button>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FORM -->
-  <section class="form-section" id="inquiry">
-    <div class="form-wrap reveal">
-      <div class="form-header">
-        <h2 class="form-title">The Brief.</h2>
-        <span class="meta">[ 01 / BOOKING DETAILS ]</span>
+<!-- ============================ HOW IT WORKS ============================ -->
+<section class="sec hiw" id="process">
+  <div class="hiw__glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#process">How It Works</a></div>
+    <h2 class="h-lg reveal">How a <b>GLAMBOT</b> event actually works, <span class="hiw__soft">step by step.</span></h2>
+
+    <div class="hiw__player" id="hiwPlayer">
+      <figure class="hiw__stage">
+        <img id="hiwImg" src="assets/step-1.jpg" alt="Step 1 — We arrive with the cases" width="1400" height="1867">
+        <span class="hiw__rec" aria-hidden="true"><i></i>REC</span>
+        <span class="hiw__tc" id="hiwTc" aria-hidden="true">STEP&nbsp;01&nbsp;/&nbsp;07</span>
+      </figure>
+
+      <div class="hiw__info">
+        <p class="hiw__step" id="hiwStep">Step 1:</p>
+        <h3 class="hiw__title" id="hiwTitle">We arrive with the cases</h3>
+        <p class="hiw__desc" id="hiwDesc">The whole robot travels in a few boxes. We bring them in and clear a space of 5 by 5 meters.</p>
+        <div class="hiw__nav">
+          <button class="hiw__btn" id="hiwPrev" aria-label="Previous step"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button>
+          <button class="hiw__btn" id="hiwNext" aria-label="Next step"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+          <a class="hiw__book" href="#book">Book your date <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
+        </div>
       </div>
+    </div>
 
-      <form id="inquiry-form" novalidate>
-        <div class="form-grid">
+    <ol class="hiw__timeline" id="hiwTimeline" role="list" aria-label="Event steps">
+      <li><button class="hiw__seg is-on" data-i="0" aria-label="Step 1: We arrive with the cases" aria-current="true">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">01&ensp;Arrive</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="1" aria-label="Step 2: We build it" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">02&ensp;Build</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="2" aria-label="Step 3: We calibrate" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">03&ensp;Calibrate</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="3" aria-label="Step 4: We test the moves" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">04&ensp;Test</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="4" aria-label="Step 5: Guests come up" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">05&ensp;Step up</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="5" aria-label="Step 6: You move however you want" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">06&ensp;Move</span>
+      </button></li>
+      <li><button class="hiw__seg" data-i="6" aria-label="Step 7: You get your video right away" aria-current="false">
+        <span class="hiw__segbar"><i></i></span>
+        <span class="hiw__seglabel">07&ensp;Delivered</span>
+      </button></li>
+    </ol>
+  </div>
+</section>
 
-          <div class="field" data-field="name">
-            <label class="field-label" for="name">Full Name <span class="req">*</span></label>
-            <input class="field-input" type="text" id="name" name="name" required placeholder="Your name" autocomplete="name" />
-            <span class="field-error"></span>
-          </div>
+<!-- ============================ PACKAGES ============================ -->
+<section class="sec" id="packages">
+  <div class="wrap">
+    <div class="rail"><a class="rail__l" href="#packages">Our Packages</a></div>
+    <h2 class="h-lg reveal">Event Packages</h2>
 
-          <div class="field" data-field="phone">
-            <label class="field-label" for="phone">WhatsApp / Phone <span class="req">*</span></label>
-            <div class="field-phone">
-              <span class="field-prefix">+962</span>
-              <input class="field-input" type="tel" id="phone" name="phone" inputmode="tel" placeholder="7X XXXX XXXX" autocomplete="tel" />
+    <div class="pkgs">
+      <button class="pkg" data-pkg="Spotlight Package" aria-pressed="false">
+        <span class="pkg__orb"><span class="pkg__path"><img class="pkg__icon" src="assets/pkg-1.png" alt="" width="122" height="120" loading="lazy"></span></span>
+        <span class="pkg__name">Spotlight<br>Package</span>
+        <span class="pkg__dur">1 Hour</span>
+        <span class="pkg__desc">A focused experience<br>for intimate events and<br>standout moments.</span>
+        <span class="pkg__pick">Select package <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      </button>
+
+      <button class="pkg" data-pkg="Premiere Package" aria-pressed="false">
+        <span class="pkg__orb"><span class="pkg__path"><img class="pkg__icon" src="assets/pkg-2.png" alt="" width="122" height="120" loading="lazy"></span></span>
+        <span class="pkg__name">Premiere Package</span>
+        <span class="pkg__dur">2 Hours</span>
+        <span class="pkg__desc">Ideal for weddings, galas,<br>and events with larger<br>guest lists.</span>
+        <span class="pkg__pick">Select package <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      </button>
+
+      <button class="pkg" data-pkg="Full-Night Package" aria-pressed="false">
+        <span class="pkg__orb"><span class="pkg__path"><img class="pkg__icon" src="assets/pkg-3.png" alt="" width="122" height="120" loading="lazy"></span></span>
+        <span class="pkg__name">Full-Night Package</span>
+        <span class="pkg__dur">Additional Hours</span>
+        <span class="pkg__desc">Extended coverage for<br>celebrations that continue<br>well into the night.</span>
+        <span class="pkg__pick">Select package <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ BOOK ============================ -->
+<section class="book" id="book">
+  <div class="book__tape" role="img" aria-label="GLAMBOT barrier tape">
+      <div class="tape tape--stripe"></div>
+      <div class="tape tape--logo"></div>
+    </div>
+
+  <div class="wrap">
+    <header class="book__head">
+      <img class="book__mark" src="assets/book-mark.png" alt="" width="420" height="357" loading="lazy">
+      <h2 class="h-xl">Reserve The Machine</h2>
+      <p>Tell us what you&rsquo;re shooting. We&rsquo;ll be in touch by<br>phone to confirm the date, the location, and the shot.</p>
+    </header>
+
+    <form class="form" id="bookForm" data-scroll-anchor novalidate>
+      <p class="form__pkg" id="pkgNote" hidden>Selected package: <b id="pkgNoteName"></b> <button type="button" id="pkgClear" class="form__pkgclear">clear</button></p>
+
+      <div class="row row--2">
+        <div class="field">
+          <label for="fName">Full name <i>*</i></label>
+          <input id="fName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
+          <span class="err" data-err="fName"></span>
+        </div>
+        <div class="field">
+          <label for="fPhone">WhatsApp / Phone <i>*</i></label>
+          <div class="phone">
+            <div class="cc" id="cc">
+              <button type="button" class="cc__btn" id="ccBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country calling code: Jordan +962">
+                <span class="cc__code" id="ccCode">+962</span>
+                <img class="cc__flag" id="ccFlag" src="assets/flags/jo.svg" alt="">
+                <span class="cc__sep" aria-hidden="true"></span>
+                <svg class="cc__chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4"/></svg>
+              </button>
+              <ul class="cc__list" id="ccList" role="listbox" aria-label="Country calling code" hidden>
+                <li role="option" id="cc-jo" data-code="+962" data-flag="assets/flags/jo.svg" aria-selected="true"><img src="assets/flags/jo.svg" alt=""><span>Jordan</span><b>+962</b></li>
+                <li role="option" id="cc-sa" data-code="+966" data-flag="assets/flags/sa.svg" aria-selected="false"><img src="assets/flags/sa.svg" alt=""><span>Saudi Arabia</span><b>+966</b></li>
+                <li role="option" id="cc-ae" data-code="+971" data-flag="assets/flags/ae.svg" aria-selected="false"><img src="assets/flags/ae.svg" alt=""><span>United Arab Emirates</span><b>+971</b></li>
+                <li role="option" id="cc-kw" data-code="+965" data-flag="assets/flags/kw.svg" aria-selected="false"><img src="assets/flags/kw.svg" alt=""><span>Kuwait</span><b>+965</b></li>
+                <li role="option" id="cc-qa" data-code="+974" data-flag="assets/flags/qa.svg" aria-selected="false"><img src="assets/flags/qa.svg" alt=""><span>Qatar</span><b>+974</b></li>
+                <li role="option" id="cc-bh" data-code="+973" data-flag="assets/flags/bh.svg" aria-selected="false"><img src="assets/flags/bh.svg" alt=""><span>Bahrain</span><b>+973</b></li>
+                <li role="option" id="cc-om" data-code="+968" data-flag="assets/flags/om.svg" aria-selected="false"><img src="assets/flags/om.svg" alt=""><span>Oman</span><b>+968</b></li>
+                <li role="option" id="cc-lb" data-code="+961" data-flag="assets/flags/lb.svg" aria-selected="false"><img src="assets/flags/lb.svg" alt=""><span>Lebanon</span><b>+961</b></li>
+                <li role="option" id="cc-eg" data-code="+20" data-flag="assets/flags/eg.svg" aria-selected="false"><img src="assets/flags/eg.svg" alt=""><span>Egypt</span><b>+20</b></li>
+                <li role="option" id="cc-gb" data-code="+44" data-flag="assets/flags/gb.svg" aria-selected="false"><img src="assets/flags/gb.svg" alt=""><span>United Kingdom</span><b>+44</b></li>
+                <li role="option" id="cc-us" data-code="+1" data-flag="assets/flags/us.svg" aria-selected="false"><img src="assets/flags/us.svg" alt=""><span>United States</span><b>+1</b></li>
+              </ul>
+              <input type="hidden" id="fCode" name="code" value="+962">
             </div>
-            <span class="field-error"></span>
+            <input id="fPhone" name="phone" type="tel" placeholder="7X XXXX XXXX" autocomplete="tel-national" inputmode="tel" required>
           </div>
-
-          <div class="field full" data-field="occasion">
-            <label class="field-label">Occasion <span class="req">*</span></label>
-            <div class="chips" id="occasion-chips" role="group" aria-label="Occasion">
-              <button type="button" class="chip" data-value="Wedding">Wedding</button>
-              <button type="button" class="chip" data-value="Gala">Gala</button>
-              <button type="button" class="chip" data-value="Corporate Event">Corporate Event</button>
-              <button type="button" class="chip" data-value="Red Carpet / Premiere">Red Carpet / Premiere</button>
-              <button type="button" class="chip" data-value="Brand Activation">Brand Activation</button>
-              <button type="button" class="chip" data-value="Product Shoot">Product Shoot</button>
-              <button type="button" class="chip" data-value="Influencer Shoot">Influencer Shoot</button>
-              <button type="button" class="chip" data-value="Other">Other</button>
-            </div>
-            <input type="hidden" name="occasion" id="occasion" value="" />
-            <span class="field-error"></span>
-          </div>
-
-          <div class="field" data-field="email">
-            <label class="field-label" for="email">Email <span class="req">*</span></label>
-            <input class="field-input" type="email" id="email" name="email" required placeholder="you@example.com" autocomplete="email" />
-            <span class="field-error"></span>
-          </div>
-
-          <div class="field" data-field="shoot_date">
-            <label class="field-label" for="date">Shoot Date <span class="req">*</span></label>
-            <input class="field-input" type="date" id="date" name="shoot_date" required />
-            <label class="flex-toggle"><input type="checkbox" id="flex-date" /> <span>I'm flexible / not sure yet</span></label>
-            <span class="field-error"></span>
-          </div>
-
-          <div class="field full" data-field="location">
-            <label class="field-label" for="venue">Location <span class="opt">optional</span></label>
-            <input class="field-input" type="text" id="venue" name="location" placeholder="Venue, studio, or city" />
-            <span class="field-error"></span>
-          </div>
-
-          <div class="field full" data-field="notes">
-            <label class="field-label" for="notes">Tell us your vision <span class="opt">optional</span></label>
-            <textarea class="field-textarea" id="notes" name="notes" rows="3" placeholder="The look, the feel, the moment you're after..."></textarea>
-            <span class="field-error"></span>
-          </div>
-
+          <span class="err" data-err="fPhone"></span>
         </div>
-
-        <!-- Honeypot: hidden from humans -->
-        <div class="hp" aria-hidden="true">
-          <label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
-        </div>
-
-        <div class="submit-row">
-          <button type="submit" class="submit-btn" id="submit-btn">Send Inquiry</button>
-          <p class="submit-note">Takes ~30 seconds · No deposit to inquire. We'll call you back within 24 hours.</p>
-        </div>
-
-        <div class="form-success">
-          <h3 class="form-success-title">Inquiry received.</h3>
-          <p class="form-success-body">
-            We've got it. Expect a call from us shortly to walk through the details.
-          </p>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-grid reveal">
-      <div>
-        <img class="footer-logo" src="/assets/logo.png" alt="GLAMBOT" />
-        <p class="footer-tag">
-          Cinematic robotic camera arm for weddings, galas, corporate events, and brand
-          activations across Jordan and the MENA region.
-        </p>
       </div>
-      <div>
-        <p class="footer-heading">Contact</p>
-        <a class="footer-link" href="mailto:book@glambotjo.com">book@glambotjo.com</a>
-        <a class="footer-link" href="#inquiry">Booking inquiry</a>
+
+      <div class="row">
+        <div class="field">
+          <span class="label">Occasion <i>*</i></span>
+          <div class="chips" id="chips" role="radiogroup" aria-label="Occasion">
+            <button type="button" class="chip is-on" role="radio" aria-checked="true"  tabindex="0"  data-v="Wedding">Wedding</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Gala">Gala</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Corporate Event">Corporate Event</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Red Carpet / Premiere">Red Carpet / Premiere</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Brand Activation">Brand Activation</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Product Shoot">Product Shoot</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Influencer Shoot">Influencer Shoot</button>
+            <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1" data-v="Other">Other</button>
+          </div>
+          <input type="hidden" id="fOccasion" name="occasion" value="Wedding">
+        </div>
+      </div>
+
+      <div class="row row--2">
+        <div class="field">
+          <label for="fEmail">Email <i>*</i></label>
+          <input id="fEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+          <span class="err" data-err="fEmail"></span>
+        </div>
+        <div class="field">
+          <label for="fDate">Shoot date <i>*</i></label>
+          <input id="fDate" name="date" type="date" placeholder="dd/mm/yyyy" required>
+          <span class="err" data-err="fDate"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="fLocation">Location <i>*</i></label>
+          <input id="fLocation" name="location" type="text" placeholder="Venue, studio, or city" required>
+          <span class="err" data-err="fLocation"></span>
+        </div>
+      </div>
+
+      <div class="hp" aria-hidden="true">
+        <label for="fWebsite">Website</label>
+        <input id="fWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="fNotes">Additional comments</label>
+          <textarea id="fNotes" name="notes" rows="1" placeholder="Write down any questions, special requests or warnings you might have."></textarea>
+        </div>
+      </div>
+
+      <div class="form__foot form__foot--solo">
+        <button class="btn-primary" type="submit" id="submitBtn">Submit Inquiry</button>
+      </div>
+    </form>
+
+    <div class="done" id="done" hidden role="status">
+      <h3>Inquiry ready to send</h3>
+      <p id="doneSummary"></p>
+      <div class="done__acts">
+        <a class="btn-primary" id="doneWhats" href="#">Send on WhatsApp</a>
+        <a class="btn-ghost" id="doneMail" href="#">Send by email</a>
+        <button class="btn-text" type="button" id="doneEdit">Edit details</button>
+      </div>
+      <p class="done__note">Nothing has been sent yet — choose how you&rsquo;d like to reach us and your message will open pre-filled.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__top">
+      <div class="foot__brand">
+        <svg class="foot__lockup" viewBox="7.0 -2.5 332.5 60.0" role="img" aria-label="GLAMBOT Jordan">
+    <g transform="rotate(-8.049)">
+    <path d="M78.4204 39.5792C80.0841 27.8144 89.7452 20.5933 101.406 22.2424C108.66 23.2681 114.293 27.6845 117.056 34.4914L109.787 36.8764C108.121 32.5542 104.785 29.8056 100.476 29.1963C93.4257 28.1994 87.7622 32.7798 86.6291 40.7928C85.582 48.1971 89.8576 54.1786 96.9553 55.1823C102.585 55.9784 107.268 53.2277 108.527 48.3372L98.4377 46.9104L99.3199 40.6718L117.729 43.2751C116.711 55.959 107.634 63.4696 95.4588 61.7479C84.1516 60.149 76.8355 50.787 78.4204 39.5792Z" fill="#FFFFFF"/>
+    <path d="M125.007 26.2529L132.765 27.35L128.305 58.8927L139.564 60.4849L138.617 67.1811L119.599 64.4918L125.007 26.2529Z" fill="#FFFFFF"/>
+    <path d="M164.257 31.0815L169.226 31.7842L179.744 72.9974L171.632 71.8502L169.608 63.4963L154.242 61.3235L149.778 68.7597L141.868 67.6412L164.261 31.0821L164.257 31.0815ZM168.025 56.7507L164.848 43.3722L164.745 43.3575L157.728 55.2946L168.021 56.75L168.025 56.7507Z" fill="#FFFFFF"/>
+    <path d="M196.46 35.6357L200.971 36.2737L208.268 62.9615L208.419 62.9829L222.727 39.3501L227.394 40.0101L229.342 80.0114L221.433 78.8929L220.828 55.7364L220.684 55.6632L207.499 77.5918L205.064 77.2475L198.41 52.6147L198.251 52.6451L191.315 74.6296L183.656 73.5465L196.465 35.632L196.46 35.6357Z" fill="#FFFFFF"/>
+    <path d="M239.974 42.5107L251.687 44.1671C258.888 45.1855 262.77 49.5612 261.916 55.5969C261.371 59.4523 259.5 61.7198 256.551 62.8044L256.529 62.9555C261.247 64.3449 263.845 68.6447 263.128 73.7176C262.188 80.3621 256.52 83.8541 248.46 82.7143L234.566 80.7496L239.974 42.5107ZM248.84 59.9041C251.884 60.3346 254.075 58.7288 254.498 55.7369C254.879 53.0472 253.317 50.9152 250.429 50.5067L246.828 49.9976L245.494 59.431L248.84 59.9041ZM248.077 76.2968C252.083 76.8634 254.477 75.2863 254.972 71.7892C255.409 68.698 253.35 66.4385 249.953 65.958L244.677 65.2119L243.207 75.6081L248.077 76.2968Z" fill="#FFFFFF"/>
+    <path d="M266.326 65.8957C267.975 54.2302 278.12 47.2361 289.681 48.8711C301.243 50.506 308.956 59.6159 307.271 71.5318C305.586 83.4477 295.598 90.0544 284.14 88.434C272.021 86.7203 264.719 77.2547 266.326 65.8957ZM299.027 70.5685C300.096 63.0132 295.431 57.232 288.635 56.271C281.231 55.224 275.517 60.1584 274.521 67.2043C273.524 74.2503 277.762 80.1295 285.166 81.1765C292.061 82.1515 298.095 77.1612 299.027 70.5685Z" fill="#FFFFFF"/>
+    <path d="M317.257 60.2701L308.89 59.0868L309.837 52.3906L334.282 55.8474L333.335 62.5436L325.02 61.3678L320.559 92.9104L312.801 91.8133L317.262 60.2707L317.257 60.2701Z" fill="#FFFFFF"/>
+    <path d="M59.6494 34.4273L49.1145 20.4223L63.1196 9.88746L59.6494 34.4273Z" fill="#FF4B00"/>
+    <path d="M49.1144 20.4232L20.4255 16.3663L22.4531 2.02832L36.804 4.0577L49.1144 20.4232Z" fill="#FFFFFF"/>
+    <path d="M20.4212 16.3654L6.08322 14.3379L2.02751 43.0181L16.3654 45.0457L20.4212 16.3654Z" fill="#FFFFFF"/>
+    <path d="M40.9184 48.5173L16.3698 45.0459L14.3423 59.3839L38.8908 62.8553L40.9184 48.5173Z" fill="#FFFFFF"/>
+    <path d="M67.5667 66.9111L53.2287 64.8835L40.9183 48.518L42.9465 34.1758L67.5667 66.9111Z" fill="#FFFFFF"/>
+    </g>
+    </svg>
+        <p class="foot__blurb">GlamBot JO creates cinematic robotic camera experiences for weddings, events, brand activations, and advertising in Amman, Jordan.</p>
+        <div class="foot__social">
+          <a id="linkInsta" href="#" aria-label="GLAMBOT Jordan on Instagram" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a id="linkWhats" href="#" aria-label="Message GLAMBOT Jordan on WhatsApp" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.6-4.3a8.5 8.5 0 1 1 15.4-4.6Z"/><path d="M9 8.6c.3-.1.6 0 .8.3l.7 1.2c.1.3.1.6-.1.8l-.4.5c-.1.2-.2.4 0 .7.4.7 1.2 1.5 1.9 1.9.3.2.5.1.7 0l.5-.4c.2-.2.5-.2.8-.1l1.2.7c.3.2.4.5.3.8-.2.6-.8 1.1-1.5 1.2-1.9.2-4.9-2.6-5.4-4.7-.2-.7.1-1.5.5-1.9Z" fill="currentColor" stroke="none"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <nav class="foot__col" aria-label="Service links">
+        <p class="foot__ch">Service links</p>
+        <a href="#about">About Us</a>
+        <a href="#audience">Our Audience</a>
+        <a href="#work">Our Work</a>
+        <a href="#included">Who We Work With</a>
+        <a href="#process">How It Works</a>
+        <a href="#packages">Our Packages</a>
+        <a href="#book">Book Now</a>
+      </nav>
+
+      <nav class="foot__col" aria-label="Policy links">
+        <p class="foot__ch">Policy Links</p>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Use</a>
+        <a href="booking-policy.html">Booking Policy</a>
+        <a href="safety.html">Safety Guidelines</a>
+      </nav>
+
+      <div class="foot__col foot__col--contact">
+        <p class="foot__ch">Contact Us</p>
+        <a class="is-strong" href="https://wa.me/962790944300">+962 7 9094 4300</a>
+        <a class="is-strong" href="mailto:book@glambotjo.com">book@glambotjo.com</a>
+        <a class="is-strong" href="https://maps.google.com/?q=Amman,+Jordan" target="_blank" rel="noopener">Amman, Jordan</a>
       </div>
     </div>
-    <div class="footer-bottom">
-      <span class="meta">© 2026 GLAMBOT JO. ALL RIGHTS RESERVED.</span>
-      <span class="meta meta-orange">[ END OF INQUIRY ]</span>
-    </div>
-  </footer>
 
-  <script src="/js/toast.js"></script>
-  <script src="/js/hero.js"></script>
-  <script src="/js/form.js"></script>
+    <a class="foot__mark" href="#top" aria-label="Back to top">
+      <svg class="foot__big" viewBox="7.0 -2.5 332.5 60.0" aria-hidden="true">
+    <g transform="rotate(-8.049)">
+    <path d="M78.4204 39.5792C80.0841 27.8144 89.7452 20.5933 101.406 22.2424C108.66 23.2681 114.293 27.6845 117.056 34.4914L109.787 36.8764C108.121 32.5542 104.785 29.8056 100.476 29.1963C93.4257 28.1994 87.7622 32.7798 86.6291 40.7928C85.582 48.1971 89.8576 54.1786 96.9553 55.1823C102.585 55.9784 107.268 53.2277 108.527 48.3372L98.4377 46.9104L99.3199 40.6718L117.729 43.2751C116.711 55.959 107.634 63.4696 95.4588 61.7479C84.1516 60.149 76.8355 50.787 78.4204 39.5792Z" fill="#FFFFFF"/>
+    <path d="M125.007 26.2529L132.765 27.35L128.305 58.8927L139.564 60.4849L138.617 67.1811L119.599 64.4918L125.007 26.2529Z" fill="#FFFFFF"/>
+    <path d="M164.257 31.0815L169.226 31.7842L179.744 72.9974L171.632 71.8502L169.608 63.4963L154.242 61.3235L149.778 68.7597L141.868 67.6412L164.261 31.0821L164.257 31.0815ZM168.025 56.7507L164.848 43.3722L164.745 43.3575L157.728 55.2946L168.021 56.75L168.025 56.7507Z" fill="#FFFFFF"/>
+    <path d="M196.46 35.6357L200.971 36.2737L208.268 62.9615L208.419 62.9829L222.727 39.3501L227.394 40.0101L229.342 80.0114L221.433 78.8929L220.828 55.7364L220.684 55.6632L207.499 77.5918L205.064 77.2475L198.41 52.6147L198.251 52.6451L191.315 74.6296L183.656 73.5465L196.465 35.632L196.46 35.6357Z" fill="#FFFFFF"/>
+    <path d="M239.974 42.5107L251.687 44.1671C258.888 45.1855 262.77 49.5612 261.916 55.5969C261.371 59.4523 259.5 61.7198 256.551 62.8044L256.529 62.9555C261.247 64.3449 263.845 68.6447 263.128 73.7176C262.188 80.3621 256.52 83.8541 248.46 82.7143L234.566 80.7496L239.974 42.5107ZM248.84 59.9041C251.884 60.3346 254.075 58.7288 254.498 55.7369C254.879 53.0472 253.317 50.9152 250.429 50.5067L246.828 49.9976L245.494 59.431L248.84 59.9041ZM248.077 76.2968C252.083 76.8634 254.477 75.2863 254.972 71.7892C255.409 68.698 253.35 66.4385 249.953 65.958L244.677 65.2119L243.207 75.6081L248.077 76.2968Z" fill="#FFFFFF"/>
+    <path d="M266.326 65.8957C267.975 54.2302 278.12 47.2361 289.681 48.8711C301.243 50.506 308.956 59.6159 307.271 71.5318C305.586 83.4477 295.598 90.0544 284.14 88.434C272.021 86.7203 264.719 77.2547 266.326 65.8957ZM299.027 70.5685C300.096 63.0132 295.431 57.232 288.635 56.271C281.231 55.224 275.517 60.1584 274.521 67.2043C273.524 74.2503 277.762 80.1295 285.166 81.1765C292.061 82.1515 298.095 77.1612 299.027 70.5685Z" fill="#FFFFFF"/>
+    <path d="M317.257 60.2701L308.89 59.0868L309.837 52.3906L334.282 55.8474L333.335 62.5436L325.02 61.3678L320.559 92.9104L312.801 91.8133L317.262 60.2707L317.257 60.2701Z" fill="#FFFFFF"/>
+    <path d="M59.6494 34.4273L49.1145 20.4223L63.1196 9.88746L59.6494 34.4273Z" fill="#FF4B00"/>
+    <path d="M49.1144 20.4232L20.4255 16.3663L22.4531 2.02832L36.804 4.0577L49.1144 20.4232Z" fill="#FFFFFF"/>
+    <path d="M20.4212 16.3654L6.08322 14.3379L2.02751 43.0181L16.3654 45.0457L20.4212 16.3654Z" fill="#FFFFFF"/>
+    <path d="M40.9184 48.5173L16.3698 45.0459L14.3423 59.3839L38.8908 62.8553L40.9184 48.5173Z" fill="#FFFFFF"/>
+    <path d="M67.5667 66.9111L53.2287 64.8835L40.9183 48.518L42.9465 34.1758L67.5667 66.9111Z" fill="#FFFFFF"/>
+    </g>
+    </svg>
+    </a>
+
+    <p class="foot__copy">&copy; 2026 GLAMBOT Jordan. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="assets/app.js?v=43"></script>
 </body>
 </html>

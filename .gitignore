@@ -21,3 +21,7 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Large source masters — keep out of git (GitHub caps files at 100MB)
+*.mov
+/media/

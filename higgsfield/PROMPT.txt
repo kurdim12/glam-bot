@@ -1,0 +1,91 @@
+GLAMBOT JORDAN — HERO VIDEO
+Generation kit for Higgsfield (image-to-video)
+================================================
+
+WHAT WE'RE MAKING
+A 5–6 second loopable hero shot: the GLAMBOT robotic camera arm swings
+into frame, overshoots slightly, settles back into its final pose.
+The GLAMBOT / JORDAN titles are NOT in the video — they get overlaid on
+the website afterwards, timed to the arm settling. (AI video mangles
+text; keeping the words as live HTML keeps them razor sharp and lets
+them keep the gradient + blur styling.)
+
+FILES IN THIS FOLDER
+  start-frame-clean-plate.jpg .... the empty scene (dark red-to-amber
+                                   gradient studio, no arm). Use as the
+                                   FIRST frame.
+  end-frame-arm-in-place.png ..... the exact final pose — arm in its
+                                   hero position on the right, camera
+                                   head pointing left. Use as the LAST
+                                   frame.
+  glambot-arm-cutout.png ......... the arm on transparency, in case
+                                   Higgsfield asks for a subject or
+                                   masking reference.
+  reference-final-look.png ....... how the finished hero looks WITH the
+                                   typography — for timing the title
+                                   reveal, not for generation.
+
+------------------------------------------------
+SETUP A — START + END FRAME (preferred)
+------------------------------------------------
+Mode:        Image-to-video with start & end frame
+Start frame: start-frame-clean-plate.jpg
+End frame:   end-frame-arm-in-place.png
+Duration:    5s   ·   Aspect: 16:9   ·   Resolution: highest available
+Camera/motion preset: Static / locked-off (no camera move)
+
+PROMPT:
+A black industrial robotic camera crane arm with a cinema camera head
+sweeps smoothly into frame from the right side, rotating on its heavy
+base. The arm decelerates, slightly overshoots its mark, then eases
+back and settles into its final pose with a small, precise correction —
+like a real motion-control robot parking. Dark cinematic studio,
+deep red-to-amber gradient backdrop glowing behind the machine, warm
+rim light on the black metal, subtle atmospheric haze. The camera
+filming the scene is completely static, locked off, tripod shot. No
+people. No text. Photorealistic, high-end commercial production,
+smooth mechanical motion, motion blur only on the moving arm.
+
+NEGATIVE PROMPT (if the field exists):
+camera shake, camera pan, camera zoom, text, watermark, logo overlay,
+people, hands, extra robotic arms, deformed machinery, flicker,
+background changing
+
+------------------------------------------------
+SETUP B — SINGLE IMAGE (if start+end isn't available)
+------------------------------------------------
+Mode:        Image-to-video, single input
+Input image: end-frame-arm-in-place.png
+Same duration / aspect / static-camera preset.
+
+PROMPT:
+The black robotic camera crane arm wakes up and performs one smooth,
+confident repositioning move: it lifts a few degrees, rotates slightly
+toward the camera, pauses, then returns precisely to its original
+parked pose. Motion-control robot precision — accelerate, decelerate,
+micro-correction at the end. Everything else in the scene stays
+perfectly still: dark studio, red-to-amber gradient glow, warm rim
+light, subtle haze. Locked-off static shot, no camera movement, no
+people, no text, photorealistic commercial footage.
+
+(Setup B loops better on the website because the first and last frames
+are identical — prefer it if both work.)
+
+------------------------------------------------
+TITLE TIMING (done on the website, not in Higgsfield)
+------------------------------------------------
+0.0s – 3.5s   video: arm swings in and settles
+3.5s          GLAMBOT fades in (0.5s ease-out, slight rise)
+4.1s          JORDAN fades in (same, 0.3s behind)
+4.6s          "Cinematic Robotic Arm" + Book Now button fade in
+Loop:         only the video loops; titles stay once shown.
+
+When you have the MP4, drop it in this folder as hero.mp4 and I'll wire
+it into the hero with that exact reveal sequence.
+
+------------------------------------------------
+EXPORT SETTINGS TO ASK FOR
+------------------------------------------------
+MP4 (H.264), 1920×1080 or higher, 24 or 30 fps, highest quality.
+If Higgsfield offers an upscale/enhance pass, run it — the video sits
+full-bleed behind the hero at up to 1920 px wide.
