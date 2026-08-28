@@ -11,7 +11,7 @@
 const CONTACT = {
   email:     'book@glambotjo.com',
   whatsapp:  '962790944300',
-  instagram: 'https://www.instagram.com/glambotjo/'
+  instagram: 'https://www.instagram.com/glambot_jo/'
 };
 
 const hasWhatsApp = /^[0-9]{8,15}$/.test(CONTACT.whatsapp);

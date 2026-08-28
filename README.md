@@ -107,14 +107,13 @@ respected by every animation (tape, icons, player, hero video, REC blink).
 
 ## ⚠️ Still open before launch
 
-1. **Instagram URL** in `assets/app.js` is a guess (`instagram.com/glambotjo`) — confirm it.
-2. **Change the admin password.** It defaults to `glambot`. Set `ADMIN_PASSWORD`
+1. **Change the admin password.** It defaults to `glambot`. Set `ADMIN_PASSWORD`
    in `.env` before this is reachable from the internet.
-3. **"For Brands" copy** duplicates "For Events" word-for-word (it did in the design
+2. **"For Brands" copy** duplicates "For Events" word-for-word (it did in the design
    too) — likely wants four brand-specific lines.
-4. **Policy pages** are drafted, not lawyered. Safety figures (3m / 147kg / 5m² /
+3. **Policy pages** are drafted, not lawyered. Safety figures (3m / 147kg / 5m² /
    20 min) come from the design. Review before publishing.
-5. **Back up `data/glambot.db`.** It is the only copy of every inquiry and is
+4. **Back up `data/glambot.db`.** It is the only copy of every inquiry and is
    gitignored by design. Set up a routine copy before this takes real bookings.
 
 ## Testing

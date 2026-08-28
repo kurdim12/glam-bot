@@ -93,8 +93,10 @@ articles about the Oscars. Pair it with the location in every title.
    Category "Video Production Service", service area Amman/Jordan, real photos,
    the WhatsApp number. Local pack placement often beats organic for these queries.
 4. **Bing Webmaster Tools** — 5 minutes, mirrors Search Console.
-5. **Confirm the Instagram URL** in `assets/app.js` (still a guess), then add it as
-   `sameAs` in the structured data so the profile links to the brand entity.
+5. ~~**Confirm the Instagram URL** in `assets/app.js`, then add it as `sameAs` in the
+   structured data so the profile links to the brand entity.~~ Done — the footer,
+   `assets/app.js` and the `LocalBusiness` `sameAs` all point at
+   `instagram.com/glambot_jo`.
 
 ### Phase 2 — the pages that rank (weeks 2–5)
 
